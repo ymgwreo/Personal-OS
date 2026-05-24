@@ -3613,25 +3613,32 @@ function updateStress(stressData, today) {
   const labelsEl = document.getElementById('api-stress-labels');
 
   if (todayStress) {
-    const score = todayStress.day_summary ?? todayStress.stress_high ?? 0;
-    if (scoreEl) scoreEl.textContent = score;
-    const level = score < 30 ? {t:'Low', tj:'低め', c:'low'}
-      : score < 60 ? {t:'Engaged', tj:'適度', c:'med'} : {t:'High', tj:'高め', c:'high'};
+    // day_summary is a string enum from Oura API
+    const summary = todayStress.day_summary || '';
+    const levelMap = {
+      'restored':       {t:'Restored',    tj:'回復',       c:'low'},
+      'normal':         {t:'Normal',      tj:'通常',       c:'med'},
+      'stressful':      {t:'Stressful',   tj:'高め',       c:'high'},
+      'very_stressful': {t:'High Stress', tj:'高ストレス',  c:'high'},
+    };
+    const level = levelMap[summary] || {t: summary || '—', tj: summary || '—', c:'med'};
+
+    // stress_high / recovery_high are in seconds
+    const stressSec   = todayStress.stress_high   || 0;
+    const recoverySec = todayStress.recovery_high  || 0;
+    const total = stressSec + recoverySec || 1;
+    const sPct  = Math.round(stressSec   / total * 100);
+    const rPct  = Math.round(recoverySec / total * 100);
+
+    if (scoreEl) scoreEl.textContent = sPct > 0 ? sPct : '—';
     if (stateEl) {
       stateEl.className = `stress-state ${level.c}`;
       stateEl.innerHTML = `<span class="en">${level.t}</span><span class="ja">${level.tj}</span>`;
     }
-
-    const stressMin   = todayStress.stress_high   || 0;
-    const recoveryMin = todayStress.recovery_high  || 0;
-    const total = stressMin + recoveryMin || 1;
-    const sPct  = Math.round(stressMin   / total * 100);
-    const rPct  = Math.round(recoveryMin / total * 100);
-
     if (barSEl) barSEl.style.width = `${sPct}%`;
     if (barREl) barREl.style.width = `${rPct}%`;
-    if (legSEl) legSEl.innerHTML = `${fmt(stressMin*60)} <span style="color:var(--ink3);font-weight:500"><span class="en">stress</span><span class="ja">ストレス</span></span>`;
-    if (legREl) legREl.innerHTML = `${fmt(recoveryMin*60)} <span style="color:var(--ink3);font-weight:500"><span class="en">recovery</span><span class="ja">回復</span></span>`;
+    if (legSEl) legSEl.innerHTML = `${fmt(stressSec)} <span style="color:var(--ink3);font-weight:500"><span class="en">stress</span><span class="ja">ストレス</span></span>`;
+    if (legREl) legREl.innerHTML = `${fmt(recoverySec)} <span style="color:var(--ink3);font-weight:500"><span class="en">recovery</span><span class="ja">回復</span></span>`;
     if (subEl)  subEl.innerHTML = `<span class="en">Today's stress summary</span><span class="ja">本日のストレスサマリー</span>`;
   } else {
     if (scoreEl) scoreEl.textContent = '—';
@@ -3650,14 +3657,18 @@ function updateStress(stressData, today) {
     barsEl.innerHTML = '';
     labelsEl.innerHTML = '';
     days.forEach(dateStr => {
-      const entry = stressData.find(s => s.day === dateStr);
-      const score = entry?.day_summary ?? 0;
-      const pct   = Math.min(100, score);
-      const isToday = dateStr === today;
-      const color = score === 0 ? 'rgba(0,0,0,0.08)'
-        : score < 30 ? 'rgba(58,125,90,0.55)'
-        : score < 60 ? 'rgba(212,98,42,0.55)' : 'rgba(196,64,64,0.65)';
-      barsEl.innerHTML += `<div style="flex:1;height:${Math.max(pct,3)}%;background:${color};border-radius:2px 2px 0 0;min-height:3px" title="stress: ${score}"></div>`;
+      const entry      = stressData.find(s => s.day === dateStr);
+      const sSec       = entry?.stress_high   || 0;
+      const rSec       = entry?.recovery_high || 0;
+      const tot        = sSec + rSec || 1;
+      const pct        = entry ? Math.round(sSec / tot * 100) : 0;
+      const summary    = entry?.day_summary || '';
+      const isToday    = dateStr === today;
+      const color = !entry ? 'rgba(0,0,0,0.08)'
+        : summary === 'restored' ? 'rgba(58,125,90,0.55)'
+        : summary === 'normal'   ? 'rgba(212,98,42,0.45)'
+        : 'rgba(196,64,64,0.65)';
+      barsEl.innerHTML += `<div style="flex:1;height:${Math.max(pct,3)}%;background:${color};border-radius:2px 2px 0 0;min-height:3px" title="${summary} ${pct}%"></div>`;
       const dow = dayLabels[new Date(dateStr).getDay()];
       labelsEl.innerHTML += `<div style="flex:1;text-align:center;font-family:var(--fm);font-size:8px;color:${isToday?'var(--am)':'var(--ink3)'};font-weight:${isToday?'700':'400'}">${dow}</div>`;
     });
