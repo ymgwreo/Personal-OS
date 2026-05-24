@@ -2386,7 +2386,7 @@ async function syncOura(force = false) {
 
 function hSaveToken() {
   const input = document.getElementById('h-token-input');
-  const tok = input?.value.trim();
+  const tok = input?.value.trim().replace(/[^\x00-\xFF]/g, '');
   if (!tok) return;
   localStorage.setItem('oura-pat', tok);
   initHealthView();
@@ -2400,7 +2400,7 @@ function hClearToken() {
 }
 function sSaveOuraToken() {
   const input = document.getElementById('s-oura-token');
-  const tok = input?.value.trim();
+  const tok = input?.value.trim().replace(/[^\x00-\xFF]/g, '');
   if (!tok) return;
   localStorage.setItem('oura-pat', tok);
   toast('Oura トークンを保存しました');
