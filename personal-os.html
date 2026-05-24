@@ -3094,6 +3094,13 @@ updateKpiCounts();
 checkHabitReset();
 loadHabits();
 setInterval(checkHabitReset, 60000);
+
+// Auto-navigate to section from URL hash (e.g. #health from health.html Full View)
+if (location.hash) {
+  const target = location.hash.slice(1);
+  const btn = [...document.querySelectorAll('.sb-i')].find(b => b.getAttribute('onclick')?.includes(`'${target}'`));
+  if (btn) go(btn, target);
+}
 if ('Notification' in window) Notification.requestPermission();
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
