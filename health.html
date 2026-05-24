@@ -3559,23 +3559,31 @@ async function initHealth() {
   hideSetup();
   const today = new Date().toISOString().slice(0,10);
   const prev  = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+  const prev2 = new Date(Date.now() - 86400000*2).toISOString().slice(0,10);
 
   try {
     const [rd, ds, sl, ac] = await Promise.all([
       ouraGet('daily_readiness', {start_date:today, end_date:today}),
       ouraGet('daily_sleep',     {start_date:today, end_date:today}),
       ouraGet('sleep',           {start_date:prev,  end_date:today}),
-      ouraGet('daily_activity',  {start_date:today, end_date:today}),
+      ouraGet('daily_activity',  {start_date:prev,  end_date:today}),
     ]);
 
-    const sleepItems = (sl.data||[]).filter(s => s.day === today);
-    const longSleep  = sleepItems.find(s => s.type==='long_sleep')
-      || sleepItems.sort((a,b)=>(b.total_sleep_duration||0)-(a.total_sleep_duration||0))[0]
+    // long_sleep優先、なければ最長セッション（today or prev）
+    const sleepAll  = sl.data || [];
+    const sleepToday = sleepAll.filter(s => s.day === today);
+    const longSleep  = sleepToday.find(s => s.type === 'long_sleep')
+      || sleepToday.sort((a,b)=>(b.total_sleep_duration||0)-(a.total_sleep_duration||0))[0]
+      || sleepAll.find(s => s.type === 'long_sleep')
+      || sleepAll.sort((a,b)=>(b.total_sleep_duration||0)-(a.total_sleep_duration||0))[0]
       || null;
+
+    // Activityは今日優先、なければ昨日
+    const acData = ac.data?.find(a => a.day === today) || ac.data?.find(a => a.day === prev) || null;
 
     updateReadiness(rd.data?.[0]);
     updateSleep(ds.data?.[0], longSleep);
-    updateActivity(ac.data?.[0]);
+    updateActivity(acData);
     updateHRV(longSleep, rd.data?.[0]);
   } catch(e) {
     if (e.code === 'NO_TOKEN') showSetup();
