@@ -1927,43 +1927,7 @@ body.dashboard #view-D .kpi-delta {
           <span class="card-lbl" style="margin-bottom:0"><span class="en">7-Day Scorecard</span><span class="ja">7日間スコアカード</span></span>
           <span style="font-size:9px;color:var(--ink3);font-family:var(--fm)" id="scorecard-date-range">May 10 – 16, 2026</span>
         </div>
-        <table class="week-table">
-          <thead>
-            <tr>
-              <th style="text-align:left"><span class="en">Metric</span><span class="ja">指標</span></th>
-              <th><div style="font-size:9px;opacity:0.6;margin-bottom:1px">Sun</div>5/10</th>
-              <th><div style="font-size:9px;opacity:0.6;margin-bottom:1px">Mon</div>5/11</th>
-              <th><div style="font-size:9px;opacity:0.6;margin-bottom:1px">Tue</div>5/12</th>
-              <th><div style="font-size:9px;opacity:0.6;margin-bottom:1px">Wed</div>5/13</th>
-              <th><div style="font-size:9px;opacity:0.6;margin-bottom:1px">Thu</div>5/14</th>
-              <th><div style="font-size:9px;opacity:0.6;margin-bottom:1px">Fri</div>5/15</th>
-              <th class="today-col"><div style="font-size:9px;opacity:0.7;margin-bottom:1px">Sat</div>5/16</th>
-              <th style="border-left:1px solid rgba(0,0,0,0.07)"><span class="en">Avg</span><span class="ja">平均</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="metric-name"><span class="en">Readiness</span><span class="ja">回復力</span></td>
-              <td>78</td><td class="sc-hi">82</td><td class="sc-lo">75</td><td>80</td><td>79</td><td class="sc-hi">84</td><td class="today-col sc-hi">82</td>
-              <td><strong class="sc-hi">80</strong></td>
-            </tr>
-            <tr>
-              <td class="metric-name"><span class="en">Sleep</span><span class="ja">睡眠</span></td>
-              <td>76</td><td class="sc-hi">84</td><td class="sc-lo">72</td><td>78</td><td>80</td><td class="sc-hi">85</td><td class="today-col sc-hi">84</td>
-              <td><strong class="sc-hi">80</strong></td>
-            </tr>
-            <tr>
-              <td class="metric-name"><span class="en">Activity</span><span class="ja">活動</span></td>
-              <td class="sc-bad">65</td><td class="sc-lo">72</td><td class="sc-bad">68</td><td>74</td><td>78</td><td>71</td><td class="today-col">78</td>
-              <td><strong>72</strong></td>
-            </tr>
-            <tr>
-              <td class="metric-name"><span class="en">HRV (ms)</span><span class="ja">HRV (ms)</span></td>
-              <td class="sc-lo">56</td><td class="sc-hi">62</td><td class="sc-bad">54</td><td>58</td><td class="sc-hi">64</td><td class="sc-hi">62</td><td class="today-col sc-hi">62</td>
-              <td><strong>60</strong></td>
-            </tr>
-          </tbody>
-        </table>
+        <table class="week-table" id="weekly-scorecard-table"></table>
       </div>
 
       <!-- Row 2: HRV Trend | Sleep Consistency | Bedtime Pattern -->
@@ -1971,28 +1935,16 @@ body.dashboard #view-D .kpi-delta {
         <div class="card-hd" style="margin-bottom:8px;align-items:flex-start">
           <div>
             <span class="card-lbl" style="margin-bottom:2px;display:block"><span class="en">HRV Trend</span><span class="ja">HRVトレンド</span></span>
-            <span style="font-size:9.5px;color:var(--ink3);font-family:var(--fm);letter-spacing:0.04em">May 10 – 16</span>
+            <span style="font-size:9.5px;color:var(--ink3);font-family:var(--fm);letter-spacing:0.04em" id="weekly-hrv-date">—</span>
           </div>
           <div style="text-align:right">
             <div style="font-family:var(--fm);font-size:28px;font-weight:500;color:var(--ink);letter-spacing:-1.4px;line-height:1">62<span style="font-size:11px;color:var(--ink3);margin-left:2px;font-weight:400">ms</span></div>
             <div style="font-size:10px;font-family:var(--fm);color:var(--gr);margin-top:3px;font-weight:600">↑ +2ms <span style="color:var(--ink3);font-weight:500"><span class="en">vs last week</span><span class="ja">先週比</span></span></div>
           </div>
         </div>
-        <!-- Day chips: each shows value with color coding relative to baseline -->
-        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;flex:1;align-items:stretch;min-height:80px">
-          <div class="hrv-chip"           style="--hrv-pct:30%"><div class="hrv-day">Sun</div><div class="hrv-bar"><div style="height:30%"></div></div><div class="hrv-val">56</div></div>
-          <div class="hrv-chip hrv-good"  style="--hrv-pct:62%"><div class="hrv-day">Mon</div><div class="hrv-bar"><div style="height:62%"></div></div><div class="hrv-val">62</div></div>
-          <div class="hrv-chip hrv-bad"   style="--hrv-pct:20%"><div class="hrv-day">Tue</div><div class="hrv-bar"><div style="height:20%"></div></div><div class="hrv-val">54</div></div>
-          <div class="hrv-chip"           style="--hrv-pct:42%"><div class="hrv-day">Wed</div><div class="hrv-bar"><div style="height:42%"></div></div><div class="hrv-val">58</div></div>
-          <div class="hrv-chip hrv-good"  style="--hrv-pct:78%"><div class="hrv-day">Thu</div><div class="hrv-bar"><div style="height:78%"></div></div><div class="hrv-val">64</div></div>
-          <div class="hrv-chip hrv-good"  style="--hrv-pct:62%"><div class="hrv-day">Fri</div><div class="hrv-bar"><div style="height:62%"></div></div><div class="hrv-val">62</div></div>
-          <div class="hrv-chip hrv-today" style="--hrv-pct:62%"><div class="hrv-day">Sat</div><div class="hrv-bar"><div style="height:62%"></div></div><div class="hrv-val">62</div></div>
-        </div>
-        <div style="font-size:10px;color:var(--ink3);font-family:var(--fm);margin-top:8px;display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid var(--line2)">
-          <span><span class="en">Avg</span><span class="ja">平均</span> <strong style="color:var(--ink)">60ms</strong></span>
-          <span><span class="en">Peak</span><span class="ja">最大</span> <strong style="color:var(--gr)">64ms</strong></span>
-          <span><span class="en">Baseline</span><span class="ja">基準</span> <strong style="color:var(--ink)">57–65</strong></span>
-        </div>
+        <!-- Day chips: filled by updateWeeklyView() -->
+        <div id="weekly-hrv-chips" style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;flex:1;align-items:stretch;min-height:80px"></div>
+        <div id="weekly-hrv-stats" style="font-size:10px;color:var(--ink3);font-family:var(--fm);margin-top:8px;display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid var(--line2)"></div>
       </div>
 
       <div class="card" style="display:flex;flex-direction:column;">
@@ -2000,61 +1952,9 @@ body.dashboard #view-D .kpi-delta {
           <span class="card-lbl" style="margin-bottom:0"><span class="en">Sleep Consistency</span><span class="ja">睡眠一貫性</span></span>
           <span class="date-chip">May 10 – 16, 2026</span>
         </div>
-        <!-- Sleep score bars: 76,84,72,78,80,85,84 -->
-        <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px;flex:1;justify-content:space-between">
-          <div style="display:flex;align-items:center;gap:8px;font-family:var(--fm);font-size:9px;color:var(--ink3)">
-            <span style="width:36px"><span style="display:block;font-size:9px;opacity:0.65">Sun</span>5/10</span>
-            <div style="flex:1;background:rgba(0,0,0,0.06);border-radius:2px;height:8px">
-              <div style="width:89%;height:100%;background:var(--bl);border-radius:2px;opacity:0.7"></div>
-            </div>
-            <span style="color:var(--ink2);width:18px;text-align:right">76</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;font-family:var(--fm);font-size:9px;color:var(--ink3)">
-            <span style="width:36px"><span style="display:block;font-size:9px;opacity:0.65">Mon</span>5/11</span>
-            <div style="flex:1;background:rgba(0,0,0,0.06);border-radius:2px;height:8px">
-              <div style="width:99%;height:100%;background:var(--gr);border-radius:2px;opacity:0.8"></div>
-            </div>
-            <span style="color:var(--gr);width:18px;text-align:right;font-weight:600">84</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;font-family:var(--fm);font-size:9px;color:var(--am)">
-            <span style="width:36px"><span style="display:block;font-size:9px;opacity:0.65">Tue</span>5/12</span>
-            <div style="flex:1;background:rgba(0,0,0,0.06);border-radius:2px;height:8px">
-              <div style="width:85%;height:100%;background:var(--am);border-radius:2px;opacity:0.8"></div>
-            </div>
-            <span style="width:18px;text-align:right">72</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;font-family:var(--fm);font-size:9px;color:var(--ink3)">
-            <span style="width:36px"><span style="display:block;font-size:9px;opacity:0.65">Wed</span>5/13</span>
-            <div style="flex:1;background:rgba(0,0,0,0.06);border-radius:2px;height:8px">
-              <div style="width:92%;height:100%;background:var(--bl);border-radius:2px;opacity:0.75"></div>
-            </div>
-            <span style="color:var(--ink2);width:18px;text-align:right">78</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;font-family:var(--fm);font-size:9px;color:var(--ink3)">
-            <span style="width:36px"><span style="display:block;font-size:9px;opacity:0.65">Thu</span>5/14</span>
-            <div style="flex:1;background:rgba(0,0,0,0.06);border-radius:2px;height:8px">
-              <div style="width:94%;height:100%;background:var(--bl);border-radius:2px;opacity:0.8"></div>
-            </div>
-            <span style="color:var(--ink2);width:18px;text-align:right">80</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;font-family:var(--fm);font-size:9px;color:var(--ink3)">
-            <span style="width:36px"><span style="display:block;font-size:9px;opacity:0.65">Fri</span>5/15</span>
-            <div style="flex:1;background:rgba(0,0,0,0.06);border-radius:2px;height:8px">
-              <div style="width:100%;height:100%;background:var(--gr);border-radius:2px"></div>
-            </div>
-            <span style="color:var(--gr);width:18px;text-align:right;font-weight:600">85</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;font-family:var(--fm);font-size:9px;color:var(--bl)">
-            <span style="width:36px;font-weight:600"><span style="display:block;font-size:9px;opacity:0.7">Sat</span>5/16</span>
-            <div style="flex:1;background:rgba(0,0,0,0.06);border-radius:2px;height:8px">
-              <div style="width:99%;height:100%;background:var(--gr);border-radius:2px"></div>
-            </div>
-            <span style="font-weight:600">84</span>
-          </div>
-        </div>
-        <div style="font-size:9px;color:var(--ink3);font-family:var(--fm);margin-top:8px">
-          <span class="en">7-day avg</span><span class="ja">7日平均</span> <strong style="color:var(--ink)">80</strong>
-        </div>
+        <!-- Sleep consistency bars: filled by updateWeeklyView() -->
+        <div id="weekly-sleep-bars" style="display:flex;flex-direction:column;gap:5px;margin-top:4px;flex:1;justify-content:space-between"></div>
+        <div id="weekly-sleep-avg-footer" style="font-size:9px;color:var(--ink3);font-family:var(--fm);margin-top:8px"></div>
       </div>
 
       <div class="card" style="display:flex;flex-direction:column;">
@@ -2065,11 +1965,10 @@ body.dashboard #view-D .kpi-delta {
         </div>
         <!-- AVG-SLEEP HERO (Weekly) -->
         <div class="avg-sleep-strip">
-          <span class="avg-sleep-num">7h 42m</span>
+          <span class="avg-sleep-num" id="weekly-avg-sleep-num">—</span>
           <span class="avg-sleep-lbl"><span class="en">Avg sleep / night</span><span class="ja">平均睡眠時間</span></span>
           <div class="avg-sleep-meta">
-            <span class="avg-sleep-range">MAY 10 – 16 · 7 NIGHTS</span>
-            <span class="avg-sleep-delta up">↑ +12m <span style="color:var(--ink3);font-weight:500">vs last week</span></span>
+            <span class="avg-sleep-range" id="weekly-avg-sleep-range">—</span>
           </div>
         </div>
         <!-- axis row: left spacer=44px (36px date + 8px gap), right spacer=70px (8px gap + 62px label) -->
@@ -2080,84 +1979,9 @@ body.dashboard #view-D .kpi-delta {
           </div>
           <div style="width:70px;flex-shrink:0"></div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px;flex:1;justify-content:space-between">
-          <!-- left%=(bedtime-22h)/660*100  width%=duration/660*100  12AM ref at 18.2% -->
-          <!-- 5/10  11:30 PM → 7:10 AM  (7h40m) amber=late -->
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="width:36px;font-family:var(--fm);font-size:9px;color:var(--ink3)"><span style="display:block;font-size:9px;opacity:0.65">Sun</span>5/10</span>
-            <div style="flex:1;position:relative;height:14px">
-              <div style="position:absolute;inset:0;background:rgba(0,0,0,0.05);border-radius:3px"></div>
-              <div style="position:absolute;left:18.2%;top:0;bottom:0;width:1px;background:rgba(0,0,0,0.15)"></div>
-              <div style="position:absolute;left:13.6%;width:69.7%;height:100%;background:rgba(212,98,42,0.38);border-radius:3px;border-left:2px solid var(--am)"></div>
-            </div>
-            <span style="font-family:var(--fm);font-size:7.5px;color:var(--am);width:62px;flex-shrink:0;text-align:right">11:30→7:10</span>
-          </div>
-          <!-- 5/11  11:05 PM → 7:00 AM  (7h55m) green=ok -->
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="width:36px;font-family:var(--fm);font-size:9px;color:var(--ink3)"><span style="display:block;font-size:9px;opacity:0.65">Mon</span>5/11</span>
-            <div style="flex:1;position:relative;height:14px">
-              <div style="position:absolute;inset:0;background:rgba(0,0,0,0.05);border-radius:3px"></div>
-              <div style="position:absolute;left:18.2%;top:0;bottom:0;width:1px;background:rgba(0,0,0,0.15)"></div>
-              <div style="position:absolute;left:9.8%;width:71.9%;height:100%;background:rgba(58,125,90,0.38);border-radius:3px;border-left:2px solid var(--gr)"></div>
-            </div>
-            <span style="font-family:var(--fm);font-size:7.5px;color:var(--ink3);width:62px;flex-shrink:0;text-align:right">11:05→7:00</span>
-          </div>
-          <!-- 5/12  11:50 PM → 7:05 AM  (7h15m) red=very late -->
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="width:36px;font-family:var(--fm);font-size:9px;color:var(--rd)"><span style="display:block;font-size:7px;opacity:0.7">Tue</span>5/12</span>
-            <div style="flex:1;position:relative;height:14px">
-              <div style="position:absolute;inset:0;background:rgba(0,0,0,0.05);border-radius:3px"></div>
-              <div style="position:absolute;left:18.2%;top:0;bottom:0;width:1px;background:rgba(0,0,0,0.15)"></div>
-              <div style="position:absolute;left:16.7%;width:65.9%;height:100%;background:rgba(196,64,64,0.4);border-radius:3px;border-left:2px solid var(--rd)"></div>
-            </div>
-            <span style="font-family:var(--fm);font-size:7.5px;color:var(--rd);width:62px;flex-shrink:0;text-align:right">11:50→7:05</span>
-          </div>
-          <!-- 5/13  11:20 PM → 7:15 AM  (7h55m) green -->
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="width:36px;font-family:var(--fm);font-size:9px;color:var(--ink3)"><span style="display:block;font-size:9px;opacity:0.65">Wed</span>5/13</span>
-            <div style="flex:1;position:relative;height:14px">
-              <div style="position:absolute;inset:0;background:rgba(0,0,0,0.05);border-radius:3px"></div>
-              <div style="position:absolute;left:18.2%;top:0;bottom:0;width:1px;background:rgba(0,0,0,0.15)"></div>
-              <div style="position:absolute;left:12.1%;width:71.9%;height:100%;background:rgba(58,125,90,0.38);border-radius:3px;border-left:2px solid var(--gr)"></div>
-            </div>
-            <span style="font-family:var(--fm);font-size:7.5px;color:var(--ink3);width:62px;flex-shrink:0;text-align:right">11:20→7:15</span>
-          </div>
-          <!-- 5/14  11:15 PM → 7:20 AM  (8h05m) green -->
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="width:36px;font-family:var(--fm);font-size:9px;color:var(--ink3)"><span style="display:block;font-size:9px;opacity:0.65">Thu</span>5/14</span>
-            <div style="flex:1;position:relative;height:14px">
-              <div style="position:absolute;inset:0;background:rgba(0,0,0,0.05);border-radius:3px"></div>
-              <div style="position:absolute;left:18.2%;top:0;bottom:0;width:1px;background:rgba(0,0,0,0.15)"></div>
-              <div style="position:absolute;left:11.4%;width:73.5%;height:100%;background:rgba(58,125,90,0.38);border-radius:3px;border-left:2px solid var(--gr)"></div>
-            </div>
-            <span style="font-family:var(--fm);font-size:7.5px;color:var(--ink3);width:62px;flex-shrink:0;text-align:right">11:15→7:20</span>
-          </div>
-          <!-- 5/15  11:10 PM → 7:00 AM  (7h50m) green -->
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="width:36px;font-family:var(--fm);font-size:9px;color:var(--ink3)"><span style="display:block;font-size:9px;opacity:0.65">Fri</span>5/15</span>
-            <div style="flex:1;position:relative;height:14px">
-              <div style="position:absolute;inset:0;background:rgba(0,0,0,0.05);border-radius:3px"></div>
-              <div style="position:absolute;left:18.2%;top:0;bottom:0;width:1px;background:rgba(0,0,0,0.15)"></div>
-              <div style="position:absolute;left:10.6%;width:71.2%;height:100%;background:rgba(58,125,90,0.38);border-radius:3px;border-left:2px solid var(--gr)"></div>
-            </div>
-            <span style="font-family:var(--fm);font-size:7.5px;color:var(--ink3);width:62px;flex-shrink:0;text-align:right">11:10→7:00</span>
-          </div>
-          <!-- 5/16  11:15 PM → 7:02 AM  (7h47m) blue=today -->
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="width:36px;font-family:var(--fm);font-size:9px;color:var(--bl);font-weight:600"><span style="display:block;font-size:9px;opacity:0.7">Sat</span>5/16</span>
-            <div style="flex:1;position:relative;height:14px">
-              <div style="position:absolute;inset:0;background:rgba(0,0,0,0.05);border-radius:3px"></div>
-              <div style="position:absolute;left:18.2%;top:0;bottom:0;width:1px;background:rgba(0,0,0,0.15)"></div>
-              <div style="position:absolute;left:11.4%;width:70.8%;height:100%;background:rgba(78,126,200,0.4);border-radius:3px;border-left:2px solid var(--bl)"></div>
-            </div>
-            <span style="font-family:var(--fm);font-size:7.5px;color:var(--bl);font-weight:600;width:62px;flex-shrink:0;text-align:right">11:15→7:02</span>
-          </div>
-        </div>
-        <div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(0,0,0,0.05);font-size:9px;color:var(--ink3);font-family:var(--fm);display:flex;gap:12px;flex-wrap:wrap">
-          <span><span class="en">Avg</span><span class="ja">平均</span> <strong style="color:var(--ink)">7h42m</strong></span>
-          <span><span class="en">Wake ±</span><span class="ja">起床±</span><strong style="color:var(--gr)">18m</strong></span>
-          <span><span class="en">On target</span><span class="ja">達成</span> <strong style="color:var(--gr)">5/7</strong></span>
-        </div>
+        <!-- Sleep window rows: filled by updateWeeklyView() -->
+        <div id="weekly-window-rows" style="display:flex;flex-direction:column;gap:5px;flex:1;justify-content:space-between"></div>
+        <div id="weekly-window-stats" style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(0,0,0,0.05);font-size:9px;color:var(--ink3);font-family:var(--fm);display:flex;gap:12px;flex-wrap:wrap"></div>
       </div>
 
       <!-- Row 3: Recovery Debt (2 cols) + Weekly Activity Load (1 col) -->
@@ -3542,18 +3366,20 @@ async function ouraGet(endpoint, params = {}) {
 async function initHealth() {
   if (!ouraToken()) { showSetup(); return; }
   hideSetup();
-  const today   = new Date().toISOString().slice(0,10);
-  const prev    = new Date(Date.now() - 86400000).toISOString().slice(0,10);
-  const sevenDaysAgo = new Date(Date.now() - 86400000*7).toISOString().slice(0,10);
+  const today        = new Date().toISOString().slice(0,10);
+  const prev         = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+  const sevenDaysAgo = new Date(Date.now() - 86400000*6).toISOString().slice(0,10);
 
   try {
-    const [rd, ds, sl, ac, ds7, stress] = await Promise.all([
+    const [rd, ds, sl, ac, ds7, stress, rd7, ac7] = await Promise.all([
       ouraGet('daily_readiness', {start_date:today,        end_date:today}),
       ouraGet('daily_sleep',     {start_date:today,        end_date:today}),
       ouraGet('sleep',           {start_date:sevenDaysAgo, end_date:today}),
       ouraGet('daily_activity',  {start_date:prev,         end_date:today}),
       ouraGet('daily_sleep',     {start_date:sevenDaysAgo, end_date:today}),
       ouraGet('daily_stress',    {start_date:sevenDaysAgo, end_date:today}).catch(()=>({data:[]})),
+      ouraGet('daily_readiness', {start_date:sevenDaysAgo, end_date:today}),
+      ouraGet('daily_activity',  {start_date:sevenDaysAgo, end_date:today}),
     ]);
 
     const sleepAll   = sl.data || [];
@@ -3574,6 +3400,7 @@ async function initHealth() {
     updateHRV(longSleep, rd.data?.[0]);
     updateSleepDebt(ds7.data || [], today);
     updateStress(stress.data || [], today);
+    updateWeeklyView(rd7.data || [], ds7.data || [], ac7.data || [], sleepAll, today);
   } catch(e) {
     if (e.code === 'NO_TOKEN') showSetup();
     else if (e.code === 'INVALID_TOKEN') { showSetup(); showError('トークンが無効です'); }
@@ -3848,6 +3675,200 @@ function updateHRV(sl, rd) {
     const dev = rd.temperature_deviation;
     const tempEl = document.getElementById('api-hrv-temp');
     if (tempEl) tempEl.textContent = dev != null ? `${dev>0?'+':''}${dev.toFixed(1)}°C` : '—';
+  }
+}
+
+function updateWeeklyView(rd7, ds7, ac7, sl, today) {
+  const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  // today + past 6 days, oldest first
+  const dates = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(Date.now() - 86400000 * i);
+    dates.push(d.toISOString().slice(0,10));
+  }
+
+  const fmtMD = (iso) => {
+    const d = new Date(iso + 'T12:00:00');
+    return d.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+  };
+  const rangeLabel = `${fmtMD(dates[0])} – ${fmtMD(dates[6])}, ${new Date().getFullYear()}`;
+
+  // Update date-range labels
+  const scoreRange = document.getElementById('scorecard-date-range');
+  if (scoreRange) scoreRange.textContent = rangeLabel;
+  document.querySelectorAll('.date-chip').forEach(el => el.textContent = rangeLabel);
+  const hrvDate = document.getElementById('weekly-hrv-date');
+  if (hrvDate) hrvDate.textContent = `${fmtMD(dates[0])} – ${fmtMD(dates[6])}`;
+
+  // Build per-day lookup
+  const byDay = {};
+  dates.forEach(d => { byDay[d] = {}; });
+  rd7.forEach(r => { if (byDay[r.day]) byDay[r.day].rd = r.score; });
+  ds7.forEach(s => { if (byDay[s.day]) byDay[s.day].sl = s.score; });
+  ac7.forEach(a => { if (byDay[a.day]) byDay[a.day].ac = a.score; });
+
+  // Best sleep session per day (for HRV + bedtime)
+  const slByDay = {};
+  sl.forEach(s => {
+    if (!slByDay[s.day] || s.type === 'long_sleep' ||
+        (s.total_sleep_duration||0) > (slByDay[s.day].total_sleep_duration||0))
+      slByDay[s.day] = s;
+  });
+  dates.forEach(d => {
+    if (slByDay[d]?.average_hrv) byDay[d].hrv = Math.round(slByDay[d].average_hrv);
+  });
+
+  const scoreClass = (v, isHrv) => {
+    if (v == null) return '';
+    if (isHrv) return v >= 55 ? 'sc-hi' : v < 45 ? 'sc-bad' : '';
+    return v >= 82 ? 'sc-hi' : v < 70 ? 'sc-bad' : v < 76 ? 'sc-lo' : '';
+  };
+  const colAvg = (key) => {
+    const vals = dates.map(d => byDay[d][key]).filter(v => v != null);
+    return vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length) : null;
+  };
+
+  // ── SCORECARD TABLE ──
+  const tableEl = document.getElementById('weekly-scorecard-table');
+  if (tableEl) {
+    const metrics = [
+      { label:'<span class="en">Readiness</span><span class="ja">回復力</span>', key:'rd' },
+      { label:'<span class="en">Sleep</span><span class="ja">睡眠</span>',       key:'sl' },
+      { label:'<span class="en">Activity</span><span class="ja">活動</span>',    key:'ac' },
+      { label:'<span class="en">HRV (ms)</span><span class="ja">HRV (ms)</span>', key:'hrv', isHrv:true },
+    ];
+    const thCols = dates.map((d,i) => {
+      const dd = new Date(d + 'T12:00:00');
+      const isT = i === 6;
+      return `<th${isT?' class="today-col"':''}><div style="font-size:9px;opacity:0.6;margin-bottom:1px">${DOW[dd.getDay()]}</div>${dd.getMonth()+1}/${dd.getDate()}</th>`;
+    }).join('');
+    let html = `<thead><tr><th style="text-align:left"><span class="en">Metric</span><span class="ja">指標</span></th>${thCols}<th style="border-left:1px solid rgba(0,0,0,0.07)"><span class="en">Avg</span><span class="ja">平均</span></th></tr></thead><tbody>`;
+    metrics.forEach(m => {
+      const tdCols = dates.map((d,i) => {
+        const v = byDay[d][m.key];
+        const cls = [i===6?'today-col':'', scoreClass(v, m.isHrv)].filter(Boolean).join(' ');
+        return `<td${cls?' class="'+cls+'"':''}>${v ?? '—'}</td>`;
+      }).join('');
+      const a = colAvg(m.key);
+      const ac = scoreClass(a, m.isHrv);
+      html += `<tr><td class="metric-name">${m.label}</td>${tdCols}<td><strong${ac?' class="'+ac+'"':''}>${a ?? '—'}</strong></td></tr>`;
+    });
+    html += '</tbody>';
+    tableEl.innerHTML = html;
+  }
+
+  // ── HRV CHIPS ──
+  const chipsEl = document.getElementById('weekly-hrv-chips');
+  if (chipsEl) {
+    const hrvVals = dates.map(d => byDay[d].hrv).filter(v => v != null);
+    const maxHrv = hrvVals.length ? Math.max(...hrvVals) : 70;
+    const minHrv = hrvVals.length ? Math.min(...hrvVals) : 50;
+    const range  = maxHrv - minHrv || 1;
+    chipsEl.innerHTML = dates.map((d,i) => {
+      const isT = i === 6;
+      const hrv = byDay[d].hrv ?? null;
+      const pct = hrv != null ? Math.round((hrv - minHrv) / range * 70 + 15) : 10;
+      const dow = DOW[new Date(d + 'T12:00:00').getDay()];
+      const cls = isT ? 'hrv-chip hrv-today' : hrv == null ? 'hrv-chip' :
+        hrv >= maxHrv ? 'hrv-chip hrv-good' : hrv <= minHrv ? 'hrv-chip hrv-bad' : 'hrv-chip';
+      return `<div class="${cls}" style="--hrv-pct:${pct}%"><div class="hrv-day">${dow}</div><div class="hrv-bar"><div style="height:${pct}%"></div></div><div class="hrv-val">${hrv ?? '—'}</div></div>`;
+    }).join('');
+    const statsEl = document.getElementById('weekly-hrv-stats');
+    if (statsEl && hrvVals.length) {
+      const avgH = Math.round(hrvVals.reduce((a,b)=>a+b,0)/hrvVals.length);
+      statsEl.innerHTML = `<span><span class="en">Avg</span><span class="ja">平均</span> <strong style="color:var(--ink)">${avgH}ms</strong></span><span><span class="en">Peak</span><span class="ja">最大</span> <strong style="color:var(--gr)">${maxHrv}ms</strong></span><span><span class="en">Range</span><span class="ja">範囲</span> <strong style="color:var(--ink)">${minHrv}–${maxHrv}</strong></span>`;
+    }
+  }
+
+  // ── SLEEP CONSISTENCY BARS ──
+  const barsEl = document.getElementById('weekly-sleep-bars');
+  if (barsEl) {
+    barsEl.innerHTML = dates.map((d,i) => {
+      const isT  = i === 6;
+      const sc   = byDay[d].sl ?? null;
+      const dd   = new Date(d + 'T12:00:00');
+      const dow  = DOW[dd.getDay()];
+      const m    = dd.getMonth()+1, day = dd.getDate();
+      const color = sc == null ? 'rgba(0,0,0,0.12)' : sc >= 82 ? 'var(--gr)' : sc < 72 ? 'var(--am)' : 'var(--bl)';
+      const tc    = sc == null ? 'var(--ink4)' : sc >= 82 ? 'var(--gr)' : sc < 72 ? 'var(--am)' : 'var(--ink3)';
+      const pct   = sc != null ? Math.min(100, sc) : 0;
+      const fw    = (isT || (sc != null && sc >= 82)) ? '600' : '400';
+      return `<div style="display:flex;align-items:center;gap:8px;font-family:var(--fm);font-size:9px;color:${tc}">
+        <span style="width:36px;font-weight:${fw}"><span style="display:block;font-size:9px;opacity:${isT?0.8:0.65}">${dow}</span>${m}/${day}</span>
+        <div style="flex:1;background:rgba(0,0,0,0.06);border-radius:2px;height:8px">
+          <div style="width:${pct}%;height:100%;background:${color};border-radius:2px;opacity:0.8"></div>
+        </div>
+        <span style="width:18px;text-align:right;font-weight:${fw}">${sc ?? '—'}</span>
+      </div>`;
+    }).join('');
+    const avgFooter = document.getElementById('weekly-sleep-avg-footer');
+    if (avgFooter) {
+      const a = colAvg('sl');
+      avgFooter.innerHTML = a != null
+        ? `<span class="en">7-day avg</span><span class="ja">7日平均</span> <strong style="color:var(--ink)">${a}</strong>`
+        : '';
+    }
+  }
+
+  // ── SLEEP WINDOW CHART ──
+  const windowEl = document.getElementById('weekly-window-rows');
+  if (windowEl) {
+    // chart: 10 PM → 9 AM = 660 min; midnight ref = 120/660 = 18.18%
+    const toMin = (iso) => {
+      if (!iso) return null;
+      const dt = new Date(iso);
+      const h = dt.getHours(), mn = dt.getMinutes();
+      const m = h >= 22 ? (h-22)*60+mn : (h+2)*60+mn;
+      return Math.max(0, Math.min(660, m));
+    };
+    const durations = [];
+    windowEl.innerHTML = dates.map((d,i) => {
+      const isT = i === 6;
+      const s   = slByDay[d];
+      const dd  = new Date(d + 'T12:00:00');
+      const dow = DOW[dd.getDay()];
+      const m   = dd.getMonth()+1, day = dd.getDate();
+      if (!s) {
+        return `<div style="display:flex;align-items:center;gap:8px">
+          <span style="width:36px;font-family:var(--fm);font-size:9px;color:var(--ink4)"><span style="display:block;font-size:9px;opacity:0.6">${dow}</span>${m}/${day}</span>
+          <div style="flex:1;position:relative;height:14px"><div style="position:absolute;inset:0;background:rgba(0,0,0,0.05);border-radius:3px"></div><div style="position:absolute;left:18.18%;top:0;bottom:0;width:1px;background:rgba(0,0,0,0.15)"></div></div>
+          <span style="font-family:var(--fm);font-size:7.5px;color:var(--ink4);width:62px;flex-shrink:0;text-align:right">—</span>
+        </div>`;
+      }
+      const bedMin  = toMin(s.bedtime_start);
+      const wakeMin = toMin(s.bedtime_end);
+      const leftPct  = bedMin  != null ? (bedMin  / 660 * 100).toFixed(1) : '0';
+      const wPct     = (bedMin != null && wakeMin != null) ? ((wakeMin - bedMin) / 660 * 100).toFixed(1) : '0';
+      const bedH = bedMin != null ? Math.floor(bedMin/60) + 22 : 25;
+      const barColor = isT ? 'rgba(78,126,200,0.4)' :
+        bedH < 23 ? 'rgba(58,125,90,0.38)' : bedH < 24 ? 'rgba(212,98,42,0.38)' : 'rgba(196,64,64,0.4)';
+      const edgeColor = isT ? 'var(--bl)' : bedH < 23 ? 'var(--gr)' : bedH < 24 ? 'var(--am)' : 'var(--rd)';
+      const tc = isT ? 'var(--bl)' : edgeColor;
+      const fw = isT ? '600' : '400';
+      if (s.total_sleep_duration) durations.push(s.total_sleep_duration);
+      return `<div style="display:flex;align-items:center;gap:8px">
+        <span style="width:36px;font-family:var(--fm);font-size:9px;color:${tc};font-weight:${fw}"><span style="display:block;font-size:9px;opacity:${isT?0.7:0.65}">${dow}</span>${m}/${day}</span>
+        <div style="flex:1;position:relative;height:14px">
+          <div style="position:absolute;inset:0;background:rgba(0,0,0,0.05);border-radius:3px"></div>
+          <div style="position:absolute;left:18.18%;top:0;bottom:0;width:1px;background:rgba(0,0,0,0.15)"></div>
+          <div style="position:absolute;left:${leftPct}%;width:${wPct}%;height:100%;background:${barColor};border-radius:3px;border-left:2px solid ${edgeColor}"></div>
+        </div>
+        <span style="font-family:var(--fm);font-size:7.5px;color:${tc};font-weight:${fw};width:62px;flex-shrink:0;text-align:right">${fmtTime(s.bedtime_start)}→${fmtTime(s.bedtime_end)}</span>
+      </div>`;
+    }).join('');
+
+    const statsEl = document.getElementById('weekly-window-stats');
+    if (statsEl && durations.length) {
+      const avgDur = Math.round(durations.reduce((a,b)=>a+b,0)/durations.length);
+      statsEl.innerHTML = `<span><span class="en">Avg</span><span class="ja">平均</span> <strong style="color:var(--ink)">${fmt(avgDur)}</strong></span>`;
+    }
+
+    // Update avg-sleep-num strip
+    const numEl   = document.getElementById('weekly-avg-sleep-num');
+    const rangeEl = document.getElementById('weekly-avg-sleep-range');
+    if (numEl && durations.length) numEl.textContent = fmt(Math.round(durations.reduce((a,b)=>a+b,0)/durations.length));
+    if (rangeEl) rangeEl.textContent = `${fmtMD(dates[0]).toUpperCase()} – ${fmtMD(dates[6]).toUpperCase()} · ${durations.length} NIGHTS`;
   }
 }
 
