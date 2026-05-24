@@ -1733,6 +1733,7 @@ body.dashboard #view-D .kpi-delta {
             <span class="badge" style="background:rgba(0,0,0,0.06);color:var(--ink3)">Low 5h20m</span>
           </div>
         </div>
+        <div id="api-workout-today" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,0,0,0.05)"></div>
       </div>
 
       <!-- HRV & Body -->
@@ -1767,6 +1768,22 @@ body.dashboard #view-D .kpi-delta {
             <span class="kpi-delta up" style="margin-top:0;padding:1px 6px">↑ +0.2°C</span>
           </div>
           <div style="font-size:9px;color:var(--ink3);margin-top:2px"><span class="en">Slightly elevated · within normal range</span><span class="ja">わずかに上昇・正常範囲内</span></div>
+        </div>
+        <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,0,0,0.05)">
+          <div style="font-size:9px;color:var(--ink3);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;font-family:var(--fm)"><span class="en">Breathing</span><span class="ja" style="text-transform:none;letter-spacing:0">呼吸数</span></div>
+          <div style="display:flex;align-items:baseline;gap:4px">
+            <span style="font-family:var(--fm);font-size:22px;font-weight:500;color:var(--ink);letter-spacing:-1px" id="api-hrv-breath">—</span>
+            <span style="font-size:10px;color:var(--ink3)">/min</span>
+            <span style="font-family:var(--fm);font-size:9px;color:var(--ink3);margin-left:auto"><span class="en">normal 12–20</span><span class="ja">正常域 12-20</span></span>
+          </div>
+        </div>
+        <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,0,0,0.05)">
+          <div style="font-size:9px;color:var(--ink3);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;font-family:var(--fm)"><span class="en">SpO₂</span><span class="ja" style="text-transform:none;letter-spacing:0">血中酸素</span></div>
+          <div style="display:flex;align-items:baseline;gap:4px">
+            <span style="font-family:var(--fm);font-size:22px;font-weight:500;color:var(--ink);letter-spacing:-1px" id="api-hrv-spo2">—</span>
+            <span style="font-size:10px;color:var(--ink3)">%</span>
+            <span id="api-hrv-spo2-state" style="font-family:var(--fm);font-size:9px;font-weight:600;margin-left:auto"></span>
+          </div>
         </div>
         <!-- Inline VO₂ Max — toggled via body.tw-vo2max -->
         <div class="vo2-inline" style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,0,0,0.05)">
@@ -1869,9 +1886,16 @@ body.dashboard #view-D .kpi-delta {
           <div class="prog" style="flex:1;margin:0"><div class="prog-f" style="width:92%;background:var(--gr)"></div></div>
           <span style="font-family:var(--fm);font-size:8.5px;color:var(--ink3);white-space:nowrap"><span class="en">7 nights</span><span class="ja">7日間</span></span>
         </div>
-        <div class="chrono-tip" style="font-size:9.5px;color:var(--ink2);line-height:1.5">
+        <div class="chrono-tip" style="font-size:9.5px;color:var(--ink2);line-height:1.5" id="api-chrono-tip">
           <span class="en">Bedtime drifted +23m later this week. Sleep before 11:25 PM tonight to realign.</span>
           <span class="ja">今週は就寝時刻が+23分後ろにずれています。今夜は23:25までに就寝で調整可。</span>
+        </div>
+        <div id="api-chrono-bedtime" style="margin-top:8px;padding:8px 10px;background:rgba(78,126,200,0.07);border-radius:8px;display:flex;align-items:center;gap:10px">
+          <span style="font-family:var(--fm);font-size:22px;font-weight:400;color:var(--bl);letter-spacing:-0.5px;line-height:1" id="api-chrono-bedtime-time">—</span>
+          <div>
+            <div style="font-size:9px;color:var(--ink3);font-family:var(--fm);letter-spacing:0.04em;text-transform:uppercase"><span class="en">Tonight's target</span><span class="ja" style="text-transform:none;letter-spacing:0">今夜の目標就寝</span></div>
+            <div style="font-size:8.5px;color:var(--ink2);font-family:var(--fm);margin-top:1px" id="api-chrono-bedtime-reason">—</div>
+          </div>
         </div>
       </div>
 
@@ -3371,7 +3395,7 @@ async function initHealth() {
   const sevenDaysAgo = new Date(Date.now() - 86400000*6).toISOString().slice(0,10);
 
   try {
-    const [rd, ds, sl, ac, ds7, stress, rd7, ac7] = await Promise.all([
+    const [rd, ds, sl, ac, ds7, stress, rd7, ac7, workout] = await Promise.all([
       ouraGet('daily_readiness', {start_date:today,        end_date:today}),
       ouraGet('daily_sleep',     {start_date:today,        end_date:today}),
       ouraGet('sleep',           {start_date:sevenDaysAgo, end_date:today}),
@@ -3380,6 +3404,7 @@ async function initHealth() {
       ouraGet('daily_stress',    {start_date:sevenDaysAgo, end_date:today}).catch(()=>({data:[]})),
       ouraGet('daily_readiness', {start_date:sevenDaysAgo, end_date:today}),
       ouraGet('daily_activity',  {start_date:sevenDaysAgo, end_date:today}),
+      ouraGet('workout',         {start_date:prev,         end_date:today}).catch(()=>({data:[]})),
     ]);
 
     const sleepAll   = sl.data || [];
@@ -3401,6 +3426,8 @@ async function initHealth() {
     updateSleepDebt(ds7.data || [], today);
     updateStress(stress.data || [], today);
     updateWeeklyView(rd7.data || [], ds7.data || [], ac7.data || [], sleepAll, today);
+    updateWorkout(workout.data || [], today);
+    updateChronoBedtime(sleepAll, rd.data?.[0]?.score);
   } catch(e) {
     if (e.code === 'NO_TOKEN') showSetup();
     else if (e.code === 'INVALID_TOKEN') { showSetup(); showError('トークンが無効です'); }
@@ -3681,16 +3708,86 @@ function updateStress(stressData, today) {
 
 function updateHRV(sl, rd) {
   if (sl) {
-    const hrv = document.getElementById('api-hrv-val');
-    const rhr = document.getElementById('api-hrv-rhr');
+    const hrv     = document.getElementById('api-hrv-val');
+    const rhr     = document.getElementById('api-hrv-rhr');
+    const breathEl= document.getElementById('api-hrv-breath');
+    const spo2El  = document.getElementById('api-hrv-spo2');
+    const spo2StEl= document.getElementById('api-hrv-spo2-state');
     if (hrv) hrv.textContent = sl.average_hrv ? Math.round(sl.average_hrv) : '—';
     if (rhr) rhr.textContent = sl.lowest_heart_rate || '—';
+    if (breathEl) {
+      const br = sl.average_breath;
+      breathEl.textContent = br ? br.toFixed(1) : '—';
+      breathEl.style.color = (br && (br < 12 || br > 20)) ? 'var(--am)' : 'var(--ink)';
+    }
+    if (spo2El && spo2StEl) {
+      const spo2 = sl.average_spo2_percentage;
+      spo2El.textContent = spo2 ? spo2.toFixed(1) : '—';
+      if (spo2) {
+        const ok = spo2 >= 95;
+        spo2El.style.color   = ok ? 'var(--ink)' : spo2 >= 90 ? 'var(--am)' : 'var(--rd)';
+        spo2StEl.textContent = ok ? 'Normal' : spo2 >= 90 ? 'Low' : 'Very Low';
+        spo2StEl.style.color = ok ? 'var(--gr)' : spo2 >= 90 ? 'var(--am)' : 'var(--rd)';
+      }
+    }
   }
   if (rd) {
     const dev = rd.temperature_deviation;
     const tempEl = document.getElementById('api-hrv-temp');
     if (tempEl) tempEl.textContent = dev != null ? `${dev>0?'+':''}${dev.toFixed(1)}°C` : '—';
   }
+}
+
+function updateWorkout(workoutData, today) {
+  const el = document.getElementById('api-workout-today');
+  if (!el) return;
+  const todayWorkouts = workoutData.filter(w => w.day === today);
+  if (!todayWorkouts.length) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  const icons = { walking:'🚶', running:'🏃', cycling:'🚴', swimming:'🏊',
+    weight_training:'🏋️', yoga:'🧘', hiking:'🥾', elliptical:'🏃', other:'💪' };
+  const intColor = { easy:'var(--bl)', moderate:'var(--tl)', hard:'var(--am)', 'max effort':'var(--rd)' };
+  el.innerHTML = todayWorkouts.map(w => {
+    const icon  = icons[w.activity] || '💪';
+    const dur   = Math.round((w.duration || 0) / 60);
+    const cal   = w.calories ? Math.round(w.calories) + ' kcal' : '—';
+    const dist  = w.distance ? (w.distance / 1000).toFixed(1) + ' km' : '';
+    const intens = w.intensity || '';
+    const ic    = intColor[intens] || 'var(--ink3)';
+    const name  = (w.activity || 'workout').replace(/_/g, ' ');
+    return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0">
+      <div style="width:28px;height:28px;border-radius:8px;background:rgba(46,122,110,0.1);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">${icon}</div>
+      <div style="min-width:0;flex:1">
+        <div style="font-size:11px;color:var(--ink);font-family:var(--fm);text-transform:capitalize;letter-spacing:-0.01em">${name}</div>
+        <div style="font-size:9px;color:var(--ink3);font-family:var(--fm)">${dur}min · ${cal}${dist?' · '+dist:''}</div>
+      </div>
+      ${intens?`<span style="font-size:7.5px;font-family:var(--fm);padding:2px 7px;border-radius:8px;background:rgba(0,0,0,0.05);color:${ic};text-transform:uppercase;letter-spacing:0.5px">${intens}</span>`:''}
+    </div>`;
+  }).join('');
+}
+
+function updateChronoBedtime(slSessions, rdScore) {
+  const timeEl   = document.getElementById('api-chrono-bedtime-time');
+  const reasonEl = document.getElementById('api-chrono-bedtime-reason');
+  if (!timeEl || !reasonEl) return;
+  const longSl = slSessions.filter(s => s.type === 'long_sleep' && s.bedtime_start);
+  if (!longSl.length) return;
+  // Average bedtime in minutes since midnight (post-midnight treated as 24h+)
+  const toMins = (iso) => {
+    const d = new Date(iso);
+    const h = d.getHours(), m = d.getMinutes();
+    return (h < 12 ? h + 24 : h) * 60 + m;
+  };
+  const avgMins = Math.round(longSl.map(s => toMins(s.bedtime_start)).reduce((a,b)=>a+b,0) / longSl.length);
+  // Adjust based on readiness
+  const adj = rdScore == null ? 0 : rdScore < 60 ? -45 : rdScore < 70 ? -30 : rdScore < 78 ? -15 : 0;
+  const target = avgMins + adj;
+  const h = Math.floor(target / 60) % 24;
+  const m = target % 60;
+  timeEl.textContent = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`;
+  reasonEl.textContent = adj < 0
+    ? `回復サポートのため${-adj}分早め（7日平均比）`
+    : '7日間のリズムを維持';
 }
 
 function updateWeeklyView(rd7, ds7, ac7, sl, today) {
