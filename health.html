@@ -1633,7 +1633,7 @@ body.dashboard #view-D .kpi-delta {
         <div class="kpi-val" id="api-sl-score">84</div>
         <div class="kpi-sub"><span class="en">Sleep Score · Good</span><span class="ja">睡眠スコア・良好</span></div>
         <!-- Sleep sessions list (naps + night) -->
-        <div id="api-sleep-sessions" style="margin:8px 0 4px"></div>
+        <div id="api-sleep-sessions" style="margin:8px 0 4px;max-height:132px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(0,0,0,0.12) transparent"></div>
         <span class="kpi-delta up">&#8593; +6 vs weekly avg</span>
         <div class="kpi-spark">
           <svg width="112" height="22" viewBox="0 0 112 22">
@@ -3573,7 +3573,9 @@ function updateSleepDebt(sevenDaySleep, today) {
     barsEl.innerHTML += `<div style="flex:1;height:${pct}%;background:${color};border-radius:2px 2px 0 0;border:${border};position:relative;min-height:3px" title="${fmtSec(dur)}"></div>`;
 
     const dow = dayLabels[new Date(dateStr).getDay()];
-    labelsEl.innerHTML += `<div style="flex:1;text-align:center;font-family:var(--fm);font-size:8px;color:${isToday?'var(--am)':'var(--ink3)'};font-weight:${isToday?'700':'400'}">${dow}</div>`;
+    const dd  = new Date(dateStr + 'T12:00:00');
+    const md  = `${dd.getMonth()+1}/${dd.getDate()}`;
+    labelsEl.innerHTML += `<div style="flex:1;text-align:center;font-family:var(--fm);font-size:8px;color:${isToday?'var(--am)':'var(--ink3)'};font-weight:${isToday?'700':'400'};line-height:1.3">${dow}<br><span style="font-size:7px;opacity:0.75">${md}</span></div>`;
   });
 
   const totalEl  = document.getElementById('api-debt-total');
@@ -3670,7 +3672,9 @@ function updateStress(stressData, today) {
         : 'rgba(196,64,64,0.65)';
       barsEl.innerHTML += `<div style="flex:1;height:${Math.max(pct,3)}%;background:${color};border-radius:2px 2px 0 0;min-height:3px" title="${summary} ${pct}%"></div>`;
       const dow = dayLabels[new Date(dateStr).getDay()];
-      labelsEl.innerHTML += `<div style="flex:1;text-align:center;font-family:var(--fm);font-size:8px;color:${isToday?'var(--am)':'var(--ink3)'};font-weight:${isToday?'700':'400'}">${dow}</div>`;
+      const dd2 = new Date(dateStr + 'T12:00:00');
+      const md2 = `${dd2.getMonth()+1}/${dd2.getDate()}`;
+      labelsEl.innerHTML += `<div style="flex:1;text-align:center;font-family:var(--fm);font-size:8px;color:${isToday?'var(--am)':'var(--ink3)'};font-weight:${isToday?'700':'400'};line-height:1.3">${dow}<br><span style="font-size:7px;opacity:0.75">${md2}</span></div>`;
     });
   }
 }
@@ -3781,9 +3785,11 @@ function updateWeeklyView(rd7, ds7, ac7, sl, today) {
       const hrv = byDay[d].hrv ?? null;
       const pct = hrv != null ? Math.round((hrv - minHrv) / range * 70 + 15) : 10;
       const dow = DOW[new Date(d + 'T12:00:00').getDay()];
+      const dd2 = new Date(d + 'T12:00:00');
+      const md2 = `${dd2.getMonth()+1}/${dd2.getDate()}`;
       const cls = isT ? 'hrv-chip hrv-today' : hrv == null ? 'hrv-chip' :
         hrv >= maxHrv ? 'hrv-chip hrv-good' : hrv <= minHrv ? 'hrv-chip hrv-bad' : 'hrv-chip';
-      return `<div class="${cls}" style="--hrv-pct:${pct}%"><div class="hrv-day">${dow}</div><div class="hrv-bar"><div style="height:${pct}%"></div></div><div class="hrv-val">${hrv ?? '—'}</div></div>`;
+      return `<div class="${cls}" style="--hrv-pct:${pct}%"><div class="hrv-day">${dow}<div style="font-size:6.5px;opacity:0.7;margin-top:1px;letter-spacing:0">${md2}</div></div><div class="hrv-bar"><div style="height:${pct}%"></div></div><div class="hrv-val">${hrv ?? '—'}</div></div>`;
     }).join('');
     const statsEl = document.getElementById('weekly-hrv-stats');
     if (statsEl && hrvVals.length) {
