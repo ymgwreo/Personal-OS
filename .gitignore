@@ -1,0 +1,18 @@
+# 旧バージョン・予備ファイル
+old/
+Health,claudedesign.html
+
+# 環境変数・シークレット（将来用）
+.env
+.env.local
+*.env
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# エディタ
+.vscode/
+.idea/
+*.swp
