@@ -1064,9 +1064,11 @@ body.tw-vo2max     .vo2-inline    { display: block; }
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.stress-state.low { background: rgba(58,125,90,0.12); color: var(--gr); }
-.stress-state.med { background: rgba(78,126,200,0.12); color: var(--bl); }
-.stress-state.high{ background: rgba(196,64,64,0.12); color: var(--rd); }
+.stress-state.low, .stress-state.gr { background: rgba(58,125,90,0.12); color: var(--gr); }
+.stress-state.med, .stress-state.bl { background: rgba(78,126,200,0.12); color: var(--bl); }
+.stress-state.high,.stress-state.rd { background: rgba(196,64,64,0.12); color: var(--rd); }
+.stress-state.nt  { background: rgba(0,0,0,0.06); color: var(--ink2); }
+.stress-state.am  { background: rgba(200,120,40,0.12); color: var(--am); }
 
 .stress-balance { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line2); }
 .stress-balance-lbl {
@@ -1529,12 +1531,8 @@ body.dashboard #view-D .kpi-delta {
         <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
           <div>
             <div class="card-lbl" style="margin-bottom:5px;color:var(--tl)"><span class="en">Today's State · AI Review</span><span class="ja">今日の状態 · AIレビュー</span></div>
-            <div class="status-state-name"><span class="en">Stable Recovery Day</span><span class="ja">安定した回復日</span></div>
-            <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:7px">
-              <span class="s-chip s-chip-gr"><span class="en">&#8593; Deep sleep</span><span class="ja">深い睡眠↑</span></span>
-              <span class="s-chip s-chip-bl"><span class="en">HRV watch</span><span class="ja">HRV 要観察</span></span>
-              <span class="s-chip s-chip-nt"><span class="en">Moderate energy</span><span class="ja">中程度のエネルギー</span></span>
-            </div>
+            <div class="status-state-name" id="ai-state-name"><span class="ja">—</span></div>
+            <div id="ai-chips" style="display:flex;gap:5px;flex-wrap:wrap;margin-top:7px"></div>
           </div>
           <span style="font-size:9px;color:var(--ink3);font-family:var(--fm)" id="ai-date">May 21, 2026</span>
         </div>
@@ -1552,28 +1550,17 @@ body.dashboard #view-D .kpi-delta {
           <!-- Zone 2: Recommended -->
           <div style="padding:0 22px;border-right:1px solid rgba(0,0,0,0.07)">
             <div class="action-col-label"><span class="en">Recommended</span><span class="ja">推奨</span></div>
-            <div class="action-list">
-              <div class="action-row ok"><span class="action-icon">✓</span><span class="en">Focus work</span><span class="ja">集中作業</span></div>
-              <div class="action-row ok"><span class="action-icon">✓</span><span class="en">Light walk (30m)</span><span class="ja">軽いウォーク（30分）</span></div>
-              <div class="action-row ok"><span class="action-icon">✓</span><span class="en">Sleep by 11:05 PM</span><span class="ja">11時05分までに就寝</span></div>
-            </div>
+            <div class="action-list" id="ai-recommended"></div>
           </div>
           <!-- Zone 3: Avoid -->
           <div style="padding:0 22px;border-right:1px solid rgba(0,0,0,0.07)">
             <div class="action-col-label"><span class="en">Avoid Today</span><span class="ja">避けること</span></div>
-            <div class="action-list">
-              <div class="action-row ng"><span class="action-icon">✕</span><span class="en">High intensity training</span><span class="ja">高強度トレーニング</span></div>
-              <div class="action-row ng"><span class="action-icon">✕</span><span class="en">Excess caffeine after 2 PM</span><span class="ja">午後のカフェイン過多</span></div>
-              <div class="action-row ng"><span class="action-icon">✕</span><span class="en">Late-night work / screens</span><span class="ja">深夜作業・スクリーン</span></div>
-            </div>
+            <div class="action-list" id="ai-avoid"></div>
           </div>
           <!-- Zone 4: Why -->
           <div style="padding-left:22px">
             <div style="font-family:var(--fm);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--am);margin-bottom:8px"><span class="en">Why</span><span class="ja">理由</span></div>
-            <div class="insight-body">
-              <span class="en">HRV suppressed (−6% vs baseline) despite adequate sleep duration. Sleep timing shifted 23min later this week. Deep sleep improved — nervous system partially restored.</span>
-              <span class="ja">睡眠時間は十分だがHRVが基準比−6%と低め。今週の就寝時刻が23分遅れている。深い睡眠は改善傾向で、神経系は部分的に回復中。</span>
-            </div>
+            <div class="insight-body" id="ai-why">—</div>
           </div>
         </div>
       </div>
@@ -3427,6 +3414,28 @@ async function initHealth() {
     updateWeeklyView(rd7.data || [], ds7.data || [], ac7.data || [], sleepAll, today);
     updateWorkout(workout.data || [], today);
     updateChronoBedtime(sleepAll, rd.data?.[0]?.score);
+
+    // AI Review — build payload from today's data and generate
+    const rdToday    = rd.data?.[0];
+    const dsToday    = ds.data?.[0];
+    const acToday    = acData;
+    const stToday    = stress.data?.find(s => s.day === today);
+    const aiPayload  = {
+      readiness:    rdToday?.score,
+      sleepScore:   dsToday?.score,
+      totalSleep:   longSleep ? fmt(longSleep.total_sleep_duration) : null,
+      hrv:          longSleep?.average_hrv ? Math.round(longSleep.average_hrv) : null,
+      rhr:          longSleep?.average_heart_rate ? Math.round(longSleep.average_heart_rate) : null,
+      activityScore: acToday?.score,
+      steps:        acToday?.steps,
+      stressState:  stToday?.day_summary,
+      sleepDebt:    dsToday?.contributors?.sleep_balance != null
+                      ? (dsToday.contributors.sleep_balance < 50 ? 'High' : dsToday.contributors.sleep_balance < 70 ? 'Moderate' : 'Low')
+                      : null,
+      breathingRate: longSleep?.average_breath ? longSleep.average_breath.toFixed(1) : null,
+      spo2:         longSleep?.average_spo2_percentage ? longSleep.average_spo2_percentage.toFixed(1) : null,
+    };
+    generateAIReview(aiPayload, today);
   } catch(e) {
     if (e.code === 'NO_TOKEN') showSetup();
     else if (e.code === 'INVALID_TOKEN') { showSetup(); showError('トークンが無効です'); }
@@ -3434,8 +3443,75 @@ async function initHealth() {
   }
 }
 
+async function generateAIReview(payload, today) {
+  const CACHE_KEY = 'ai-review-cache';
+  const cached = (() => { try { return JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); } catch { return null; } })();
+  if (cached && cached.date === today) {
+    updateAIReview(cached.data, today);
+    return;
+  }
+
+  const WORKER = 'https://muddy-boat-633b.nxoxo-l-l-leo.workers.dev/ai-review';
+  try {
+    const res = await fetch(WORKER, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`AI review HTTP ${res.status}`);
+    const data = await res.json();
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ date: today, data }));
+    updateAIReview(data, today);
+  } catch(e) {
+    console.error('AI review error:', e);
+  }
+}
+
+function updateAIReview(data, today) {
+  // State name
+  const nameEl = document.getElementById('ai-state-name');
+  if (nameEl && data.stateName) nameEl.innerHTML = `<span class="ja">${data.stateName}</span>`;
+
+  // Date label
+  const dateEl = document.getElementById('ai-date');
+  if (dateEl && today) {
+    const d = new Date(today + 'T12:00:00');
+    dateEl.textContent = d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+  }
+
+  // Chips
+  const chipsEl = document.getElementById('ai-chips');
+  if (chipsEl && Array.isArray(data.chips)) {
+    chipsEl.innerHTML = data.chips.map(c =>
+      `<span class="stress-state ${c.type}">${c.label}</span>`
+    ).join('');
+  }
+
+  // Recommended
+  const recEl = document.getElementById('ai-recommended');
+  if (recEl && Array.isArray(data.recommended)) {
+    recEl.innerHTML = data.recommended.map(t =>
+      `<div class="action-row ok"><div class="action-icon">✓</div><span>${t}</span></div>`
+    ).join('');
+  }
+
+  // Avoid
+  const avoidEl = document.getElementById('ai-avoid');
+  if (avoidEl && Array.isArray(data.avoid)) {
+    avoidEl.innerHTML = data.avoid.map(t =>
+      `<div class="action-row ng"><div class="action-icon">✕</div><span>${t}</span></div>`
+    ).join('');
+  }
+
+  // Why
+  const whyEl = document.getElementById('ai-why');
+  if (whyEl && data.why) whyEl.textContent = data.why;
+}
+
 async function syncHealth() {
   toast('Oura データを同期中...');
+  // Clear AI cache so a fresh review is generated on sync
+  localStorage.removeItem('ai-review-cache');
   await initHealth();
   toast('同期完了');
 }
