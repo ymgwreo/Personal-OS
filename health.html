@@ -1670,6 +1670,8 @@ body.dashboard #view-D .kpi-delta {
             <span><span class="en">Efficiency</span><span class="ja">睡眠効率</span></span><span style="font-family:var(--fm);color:var(--ink2)" id="api-sl-eff">91%</span>
           </div>
         </div>
+        <!-- Sleep sessions list (naps + night) -->
+        <div id="api-sleep-sessions" style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(0,0,0,0.05)"></div>
         <!-- Inline Sleep Regularity (SRI) — toggled via body.tw-sri -->
         <div class="sri-inline" style="margin-top:10px;padding-top:8px;border-top:1px solid var(--line2)">
           <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px">
@@ -1795,72 +1797,47 @@ body.dashboard #view-D .kpi-delta {
         </div>
         <!-- Accumulated deficit -->
         <div style="margin-bottom:4px">
-          <span class="kpi-val" style="font-size:34px;color:var(--am);font-weight:600;letter-spacing:-1.5px">−1h 13m</span>
+          <span class="kpi-val" id="api-debt-total" style="font-size:34px;color:var(--am);font-weight:600;letter-spacing:-1.5px">—</span>
         </div>
-        <div class="kpi-sub" style="margin-bottom:10px">
-          <span class="en">deficit vs 8h · 4 of 7 nights short</span><span class="ja">目標8時間との不足累計 · 7日中4日不足</span>
-        </div>
-        <!-- 7-day bar chart (max scale = 9h = 40px). Target line at 8h = top:4px) -->
-        <div style="position:relative;height:40px;margin-bottom:4px">
-          <div style="position:absolute;left:0;right:0;top:4px;border-top:1px dashed rgba(0,0,0,0.18)"></div>
-          <div style="display:flex;gap:3px;height:100%;align-items:flex-end">
-            <div style="flex:1;height:83%;background:rgba(212,98,42,0.45);border-radius:2px 2px 0 0"></div>
-            <div style="flex:1;height:94%;background:rgba(58,125,90,0.50);border-radius:2px 2px 0 0"></div>
-            <div style="flex:1;height:87%;background:rgba(212,98,42,0.40);border-radius:2px 2px 0 0"></div>
-            <div style="flex:1;height:89%;background:rgba(58,125,90,0.40);border-radius:2px 2px 0 0"></div>
-            <div style="flex:1;height:96%;background:rgba(58,125,90,0.55);border-radius:2px 2px 0 0"></div>
-            <div style="flex:1;height:88%;background:rgba(212,98,42,0.38);border-radius:2px 2px 0 0"></div>
-            <div style="flex:1;height:84%;background:var(--am);border-radius:2px 2px 0 0;opacity:0.85"></div>
-          </div>
+        <div class="kpi-sub" id="api-debt-sub" style="margin-bottom:10px">—</div>
+        <!-- 7-day bar chart -->
+        <div style="position:relative;height:48px;margin-bottom:4px">
+          <div style="position:absolute;left:0;right:0;top:5px;border-top:1px dashed rgba(0,0,0,0.18)"></div>
+          <div id="api-debt-bars" style="display:flex;gap:3px;height:100%;align-items:flex-end"></div>
         </div>
         <!-- Day labels -->
-        <div style="display:flex;gap:3px;margin-bottom:10px">
-          <div style="flex:1;text-align:center;font-family:var(--fm);font-size:8px;color:var(--ink3)">S</div>
-          <div style="flex:1;text-align:center;font-family:var(--fm);font-size:8px;color:var(--ink3)">M</div>
-          <div style="flex:1;text-align:center;font-family:var(--fm);font-size:8px;color:var(--ink3)">T</div>
-          <div style="flex:1;text-align:center;font-family:var(--fm);font-size:8px;color:var(--ink3)">W</div>
-          <div style="flex:1;text-align:center;font-family:var(--fm);font-size:8px;color:var(--ink3)">T</div>
-          <div style="flex:1;text-align:center;font-family:var(--fm);font-size:8px;color:var(--ink3)">F</div>
-          <div style="flex:1;text-align:center;font-family:var(--fm);font-size:8px;color:var(--am);font-weight:700">S</div>
-        </div>
+        <div id="api-debt-labels" style="display:flex;gap:3px;margin-bottom:10px"></div>
         <!-- Footer: tonight's target -->
         <div style="padding-top:8px;border-top:1px solid var(--line2)">
           <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">
             <span style="font-size:9.5px;color:var(--ink3)"><span class="en">Tonight target</span><span class="ja">今夜の目標</span></span>
-            <strong style="font-family:var(--fm);font-size:18px;color:var(--gr);letter-spacing:-0.6px">8h 28m</strong>
+            <strong id="api-debt-target" style="font-family:var(--fm);font-size:18px;color:var(--gr);letter-spacing:-0.6px">8h 00m</strong>
           </div>
-          <div style="font-size:9px;color:var(--ink3)"><span class="en">+28m above 8h to offset today's shortfall</span><span class="ja">+28分で本日不足分の回収を開始</span></div>
+          <div id="api-debt-target-sub" style="font-size:9px;color:var(--ink3)">—</div>
         </div>
       </div>
 
       <div class="card tile-stress" id="card-stress" style="padding:11px 13px">
         <div class="card-lbl"><span class="en">Daytime Stress</span><span class="ja">日中ストレス</span></div>
         <div class="stress-now">
-          <span class="stress-num">42</span>
-          <span class="stress-state med"><span class="en">Engaged</span><span class="ja">適度</span></span>
-          <span style="font-family:var(--fm);font-size:9px;color:var(--am);font-weight:600;margin-left:auto">↑ +4 / 7d</span>
+          <span class="stress-num" id="api-stress-score">—</span>
+          <span class="stress-state med" id="api-stress-state">—</span>
         </div>
-        <div style="font-size:10px;color:var(--ink3);margin-top:3px;line-height:1.45"><span class="en">Peak around 14:00</span><span class="ja">14時頃ピーク</span></div>
-        <!-- Simple stress curve — no zone bands, no axis labels -->
-        <svg width="100%" height="56" viewBox="0 0 220 56" style="margin-top:10px" preserveAspectRatio="none">
-          <path d="M0,42 L22,40 L44,32 L66,22 L88,18 L110,26 L132,30 L154,22 L176,16 L198,28 L220,38"
-            fill="none" stroke="var(--am)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M0,42 L22,40 L44,32 L66,22 L88,18 L110,26 L132,30 L154,22 L176,16 L198,28 L220,38 L220,56 L0,56 Z"
-            fill="rgba(212,98,42,0.08)"/>
-          <circle cx="176" cy="16" r="3" fill="var(--rd)"/>
-        </svg>
-        <div style="display:flex;justify-content:space-between;font-family:var(--fm);font-size:8.5px;color:var(--ink3);margin-top:3px;letter-spacing:0.04em">
-          <span>6 AM</span><span>12 PM</span><span style="color:var(--rd);font-weight:600">14:00 peak</span><span>now</span>
+        <div style="font-size:10px;color:var(--ink3);margin-top:3px;line-height:1.45" id="api-stress-sub">—</div>
+        <!-- Stress bar chart: high / rest / recovery per day (7 days) -->
+        <div style="margin-top:10px">
+          <div id="api-stress-bars" style="display:flex;gap:3px;height:48px;align-items:flex-end"></div>
+          <div id="api-stress-labels" style="display:flex;gap:3px;margin-top:3px"></div>
         </div>
         <div class="stress-balance">
           <div class="stress-balance-lbl"><span class="en">Stress vs Recovery</span><span class="ja">ストレス vs 回復</span></div>
           <div class="stress-bar">
-            <div class="stress-bar-stress" style="width:64.4%"></div>
-            <div class="stress-bar-recovery" style="width:35.6%"></div>
+            <div class="stress-bar-stress" id="api-stress-bar-s" style="width:50%"></div>
+            <div class="stress-bar-recovery" id="api-stress-bar-r" style="width:50%"></div>
           </div>
           <div class="stress-bar-legend">
-            <span class="l-stress">5h 48m <span style="color:var(--ink3);font-weight:500"><span class="en">stress</span><span class="ja">ストレス</span></span></span>
-            <span class="l-recovery">3h 12m <span style="color:var(--ink3);font-weight:500"><span class="en">recovery</span><span class="ja">回復</span></span></span>
+            <span class="l-stress" id="api-stress-leg-s">— <span style="color:var(--ink3);font-weight:500"><span class="en">stress</span><span class="ja">ストレス</span></span></span>
+            <span class="l-recovery" id="api-stress-leg-r">— <span style="color:var(--ink3);font-weight:500"><span class="en">recovery</span><span class="ja">回復</span></span></span>
           </div>
         </div>
       </div>
@@ -3557,20 +3534,21 @@ async function ouraGet(endpoint, params = {}) {
 async function initHealth() {
   if (!ouraToken()) { showSetup(); return; }
   hideSetup();
-  const today = new Date().toISOString().slice(0,10);
-  const prev  = new Date(Date.now() - 86400000).toISOString().slice(0,10);
-  const prev2 = new Date(Date.now() - 86400000*2).toISOString().slice(0,10);
+  const today   = new Date().toISOString().slice(0,10);
+  const prev    = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+  const sevenDaysAgo = new Date(Date.now() - 86400000*7).toISOString().slice(0,10);
 
   try {
-    const [rd, ds, sl, ac] = await Promise.all([
-      ouraGet('daily_readiness', {start_date:today, end_date:today}),
-      ouraGet('daily_sleep',     {start_date:today, end_date:today}),
-      ouraGet('sleep',           {start_date:prev,  end_date:today}),
-      ouraGet('daily_activity',  {start_date:prev,  end_date:today}),
+    const [rd, ds, sl, ac, ds7, stress] = await Promise.all([
+      ouraGet('daily_readiness', {start_date:today,        end_date:today}),
+      ouraGet('daily_sleep',     {start_date:today,        end_date:today}),
+      ouraGet('sleep',           {start_date:sevenDaysAgo, end_date:today}),
+      ouraGet('daily_activity',  {start_date:prev,         end_date:today}),
+      ouraGet('daily_sleep',     {start_date:sevenDaysAgo, end_date:today}),
+      ouraGet('daily_stress',    {start_date:sevenDaysAgo, end_date:today}).catch(()=>({data:[]})),
     ]);
 
-    // long_sleep優先、なければ最長セッション（today or prev）
-    const sleepAll  = sl.data || [];
+    const sleepAll   = sl.data || [];
     const sleepToday = sleepAll.filter(s => s.day === today);
     const longSleep  = sleepToday.find(s => s.type === 'long_sleep')
       || sleepToday.sort((a,b)=>(b.total_sleep_duration||0)-(a.total_sleep_duration||0))[0]
@@ -3578,13 +3556,15 @@ async function initHealth() {
       || sleepAll.sort((a,b)=>(b.total_sleep_duration||0)-(a.total_sleep_duration||0))[0]
       || null;
 
-    // Activityは今日優先、なければ昨日
     const acData = ac.data?.find(a => a.day === today) || ac.data?.find(a => a.day === prev) || null;
 
     updateReadiness(rd.data?.[0]);
     updateSleep(ds.data?.[0], longSleep);
+    updateSleepSessions(sleepAll, today);
     updateActivity(acData);
     updateHRV(longSleep, rd.data?.[0]);
+    updateSleepDebt(ds7.data || [], today);
+    updateStress(stress.data || [], today);
   } catch(e) {
     if (e.code === 'NO_TOKEN') showSetup();
     else if (e.code === 'INVALID_TOKEN') { showSetup(); showError('トークンが無効です'); }
@@ -3686,6 +3666,152 @@ function updateActivity(ac) {
   if (cal)   cal.textContent   = ac.active_calories ? `${ac.active_calories}` : '—';
   if (sBar)  sBar.style.width  = `${Math.min(100,((ac.steps||0)/10000)*100)}%`;
   if (cBar)  cBar.style.width  = `${Math.min(100,((ac.active_calories||0)/600)*100)}%`;
+}
+
+function updateSleepSessions(allSessions, today) {
+  const el = document.getElementById('api-sleep-sessions');
+  if (!el) return;
+  const sessions = allSessions.filter(s => s.day === today || s.day === today)
+    .sort((a,b) => new Date(a.bedtime_start) - new Date(b.bedtime_start));
+  if (!sessions.length) { el.innerHTML = ''; return; }
+  const typeLabel = { long_sleep:'夜の睡眠', nap:'昼寝', rest:'休息', sleep:'睡眠' };
+  const typeColor = { long_sleep:'var(--bl)', nap:'var(--tl)', rest:'var(--ink3)', sleep:'var(--bl)' };
+  el.innerHTML = sessions.map(s => {
+    const label = typeLabel[s.type] || s.type;
+    const color = typeColor[s.type] || 'var(--ink3)';
+    const dur   = fmt(s.total_sleep_duration);
+    const start = fmtTime(s.bedtime_start);
+    const end   = fmtTime(s.bedtime_end);
+    return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(0,0,0,0.05)">
+      <span style="font-size:9px;font-family:var(--fm);color:${color};font-weight:600;width:52px;flex-shrink:0">${label}</span>
+      <span style="font-family:var(--fm);font-size:9px;color:var(--ink2)">${start} – ${end}</span>
+      <span style="font-family:var(--fm);font-size:9px;color:var(--ink3);margin-left:auto">${dur}</span>
+    </div>`;
+  }).join('');
+}
+
+function updateSleepDebt(sevenDaySleep, today) {
+  const TARGET = 8 * 3600;
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(Date.now() - 86400000 * i);
+    days.push(d.toISOString().slice(0,10));
+  }
+  const dayLabels = ['日','月','火','水','木','金','土'];
+  let totalDeficit = 0, shortNights = 0;
+  const barsEl   = document.getElementById('api-debt-bars');
+  const labelsEl = document.getElementById('api-debt-labels');
+  if (!barsEl || !labelsEl) return;
+
+  const maxH = 9 * 3600;
+  barsEl.innerHTML = '';
+  labelsEl.innerHTML = '';
+
+  days.forEach((dateStr, i) => {
+    const entry = sevenDaySleep.find(s => s.day === dateStr);
+    const dur   = entry?.total_sleep_duration || 0;
+    const isToday = dateStr === today;
+    const met   = dur >= TARGET;
+    const pct   = Math.min(100, (dur / maxH) * 100);
+    const deficit = Math.max(0, TARGET - dur);
+    totalDeficit += deficit;
+    if (dur > 0 && !met) shortNights++;
+
+    const color = dur === 0 ? 'rgba(0,0,0,0.08)'
+      : met ? 'rgba(58,125,90,0.55)' : 'rgba(212,98,42,0.55)';
+    const border = isToday ? '2px solid var(--am)' : 'none';
+    barsEl.innerHTML += `<div style="flex:1;height:${pct}%;background:${color};border-radius:2px 2px 0 0;border:${border};position:relative;min-height:3px" title="${fmtSec(dur)}"></div>`;
+
+    const dow = dayLabels[new Date(dateStr).getDay()];
+    labelsEl.innerHTML += `<div style="flex:1;text-align:center;font-family:var(--fm);font-size:8px;color:${isToday?'var(--am)':'var(--ink3)'};font-weight:${isToday?'700':'400'}">${dow}</div>`;
+  });
+
+  const totalEl  = document.getElementById('api-debt-total');
+  const subEl    = document.getElementById('api-debt-sub');
+  const targetEl = document.getElementById('api-debt-target');
+  const targetSub= document.getElementById('api-debt-target-sub');
+
+  if (totalEl) {
+    totalEl.textContent = totalDeficit > 0 ? `−${fmt(totalDeficit)}` : '±0';
+    totalEl.style.color = totalDeficit > 0 ? 'var(--am)' : 'var(--gr)';
+  }
+  if (subEl) subEl.textContent = `目標8時間との不足累計 · 7日中${shortNights}日不足`;
+
+  // tonight's target: 8h + remaining deficit / 7
+  const tonightTarget = TARGET + Math.round(totalDeficit / 7);
+  if (targetEl) targetEl.textContent = fmt(tonightTarget);
+  if (targetSub) targetSub.textContent = totalDeficit > 0
+    ? `不足分を少しずつ回収するための目標` : `7日間の目標達成中 ✓`;
+}
+
+function fmtSec(sec) {
+  if (!sec) return '—';
+  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
+  return h ? `${h}h ${m}m` : `${m}m`;
+}
+
+function updateStress(stressData, today) {
+  const todayStress = stressData.find(s => s.day === today);
+  const scoreEl  = document.getElementById('api-stress-score');
+  const stateEl  = document.getElementById('api-stress-state');
+  const subEl    = document.getElementById('api-stress-sub');
+  const barSEl   = document.getElementById('api-stress-bar-s');
+  const barREl   = document.getElementById('api-stress-bar-r');
+  const legSEl   = document.getElementById('api-stress-leg-s');
+  const legREl   = document.getElementById('api-stress-leg-r');
+  const barsEl   = document.getElementById('api-stress-bars');
+  const labelsEl = document.getElementById('api-stress-labels');
+
+  if (todayStress) {
+    const score = todayStress.day_summary ?? todayStress.stress_high ?? 0;
+    if (scoreEl) scoreEl.textContent = score;
+    const level = score < 30 ? {t:'Low', tj:'低め', c:'low'}
+      : score < 60 ? {t:'Engaged', tj:'適度', c:'med'} : {t:'High', tj:'高め', c:'high'};
+    if (stateEl) {
+      stateEl.className = `stress-state ${level.c}`;
+      stateEl.innerHTML = `<span class="en">${level.t}</span><span class="ja">${level.tj}</span>`;
+    }
+
+    const stressMin   = todayStress.stress_high   || 0;
+    const recoveryMin = todayStress.recovery_high  || 0;
+    const total = stressMin + recoveryMin || 1;
+    const sPct  = Math.round(stressMin   / total * 100);
+    const rPct  = Math.round(recoveryMin / total * 100);
+
+    if (barSEl) barSEl.style.width = `${sPct}%`;
+    if (barREl) barREl.style.width = `${rPct}%`;
+    if (legSEl) legSEl.innerHTML = `${fmt(stressMin*60)} <span style="color:var(--ink3);font-weight:500"><span class="en">stress</span><span class="ja">ストレス</span></span>`;
+    if (legREl) legREl.innerHTML = `${fmt(recoveryMin*60)} <span style="color:var(--ink3);font-weight:500"><span class="en">recovery</span><span class="ja">回復</span></span>`;
+    if (subEl)  subEl.innerHTML = `<span class="en">Today's stress summary</span><span class="ja">本日のストレスサマリー</span>`;
+  } else {
+    if (scoreEl) scoreEl.textContent = '—';
+    if (stateEl) stateEl.textContent = '—';
+    if (subEl)   subEl.innerHTML = '<span style="font-size:9px;color:var(--ink3)">Oura アプリと同期後に表示されます</span>';
+  }
+
+  // 7-day stress bar chart
+  if (barsEl && labelsEl && stressData.length) {
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(Date.now() - 86400000 * i);
+      days.push(d.toISOString().slice(0,10));
+    }
+    const dayLabels = ['日','月','火','水','木','金','土'];
+    barsEl.innerHTML = '';
+    labelsEl.innerHTML = '';
+    days.forEach(dateStr => {
+      const entry = stressData.find(s => s.day === dateStr);
+      const score = entry?.day_summary ?? 0;
+      const pct   = Math.min(100, score);
+      const isToday = dateStr === today;
+      const color = score === 0 ? 'rgba(0,0,0,0.08)'
+        : score < 30 ? 'rgba(58,125,90,0.55)'
+        : score < 60 ? 'rgba(212,98,42,0.55)' : 'rgba(196,64,64,0.65)';
+      barsEl.innerHTML += `<div style="flex:1;height:${Math.max(pct,3)}%;background:${color};border-radius:2px 2px 0 0;min-height:3px" title="stress: ${score}"></div>`;
+      const dow = dayLabels[new Date(dateStr).getDay()];
+      labelsEl.innerHTML += `<div style="flex:1;text-align:center;font-family:var(--fm);font-size:8px;color:${isToday?'var(--am)':'var(--ink3)'};font-weight:${isToday?'700':'400'}">${dow}</div>`;
+    });
+  }
 }
 
 function updateHRV(sl, rd) {
