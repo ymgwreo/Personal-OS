@@ -1797,7 +1797,7 @@ body.dashboard #view-D .kpi-delta {
         </div>
         <!-- Accumulated deficit -->
         <div style="margin-bottom:4px">
-          <span class="kpi-val" id="api-debt-total" style="font-size:34px;color:var(--am);font-weight:600;letter-spacing:-1.5px">—</span>
+          <span class="kpi-val" id="api-debt-total" style="font-size:34px;color:var(--am);font-weight:400;letter-spacing:-1.5px">—</span>
         </div>
         <div class="kpi-sub" id="api-debt-sub" style="margin-bottom:10px">—</div>
         <!-- 7-day bar chart -->
@@ -1886,7 +1886,7 @@ body.dashboard #view-D .kpi-delta {
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
           <div style="width:10px;height:10px;border-radius:50%;background:var(--gr);box-shadow:0 0 0 3px rgba(58,125,90,0.18)"></div>
-          <span style="font-family:var(--fm);font-size:22px;font-weight:600;color:var(--ink);letter-spacing:-0.6px;line-height:1">Strong</span>
+          <span style="font-family:var(--fm);font-size:22px;font-weight:400;color:var(--ink);letter-spacing:-0.6px;line-height:1">Strong</span>
         </div>
         <div style="font-size:10px;color:var(--ink3);margin-top:5px"><span class="en">Top 25% · stable</span><span class="ja">上位25% · 安定</span></div>
         <div class="res-bars" style="margin-top:10px">
@@ -2655,7 +2655,7 @@ body.dashboard #view-D .kpi-delta {
               <span class="kpi-delta up" style="margin-top:0;padding:1px 7px"><span class="en">Top 25%</span><span class="ja">上位25%</span></span>
             </div>
             <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:5px">
-              <span style="font-family:var(--fm);font-size:22px;font-weight:600;color:var(--gr);letter-spacing:-0.6px;line-height:1">Strong</span>
+              <span style="font-family:var(--fm);font-size:22px;font-weight:400;color:var(--gr);letter-spacing:-0.6px;line-height:1">Strong</span>
             </div>
             <!-- Resilience tier scale -->
             <div style="display:flex;gap:2px;margin-bottom:5px">
@@ -3569,6 +3569,7 @@ async function initHealth() {
     updateReadiness(rd.data?.[0]);
     updateSleep(ds.data?.[0], longSleep);
     updateSleepSessions(sleepAll, today);
+    updateSleepStages(sleepAll.filter(s => s.day === today));
     updateActivity(acData);
     updateHRV(longSleep, rd.data?.[0]);
     updateSleepDebt(ds7.data || [], today);
@@ -3643,23 +3644,36 @@ function updateSleep(ds, sl) {
     if (bed)  bed.textContent  = fmtTime(sl.bedtime_start);
     if (wake) wake.textContent = fmtTime(sl.bedtime_end);
     if (eff)  eff.textContent  = sl.efficiency ? `${sl.efficiency}%` : '—';
-    // sleep stages bar
-    const dur = sl.total_sleep_duration || 1;
-    [['api-sl-deep',sl.deep_sleep_duration],['api-sl-rem',sl.rem_sleep_duration],
-     ['api-sl-lt',sl.light_sleep_duration],['api-sl-awk',sl.awake_time]].forEach(([id,sec])=>{
-      const el = document.getElementById(id);
-      if (el) el.style.flex = String(sec||0);
-    });
-    // legend
-    const deep = document.getElementById('api-leg-deep');
-    const rem  = document.getElementById('api-leg-rem');
-    const lt   = document.getElementById('api-leg-lt');
-    const awk  = document.getElementById('api-leg-awk');
-    if (deep) deep.textContent = fmt(sl.deep_sleep_duration);
-    if (rem)  rem.textContent  = fmt(sl.rem_sleep_duration);
-    if (lt)   lt.textContent   = fmt(sl.light_sleep_duration);
-    if (awk)  awk.textContent  = fmt(sl.awake_time);
   }
+}
+
+function updateSleepStages(todaySessions) {
+  if (!todaySessions.length) return;
+  // 全セッション合算
+  const sum = (key) => todaySessions.reduce((acc, s) => acc + (s[key] || 0), 0);
+  const deep  = sum('deep_sleep_duration');
+  const rem   = sum('rem_sleep_duration');
+  const light = sum('light_sleep_duration');
+  const awk   = sum('awake_time');
+  const total = sum('total_sleep_duration') || 1;
+
+  const totalEl = document.getElementById('api-sl-total');
+  if (totalEl) totalEl.textContent = fmt(total);
+
+  [['api-sl-deep', deep],['api-sl-rem', rem],['api-sl-lt', light],['api-sl-awk', awk]]
+    .forEach(([id, sec]) => {
+      const el = document.getElementById(id);
+      if (el) el.style.flex = String(sec);
+    });
+
+  const deepEl = document.getElementById('api-leg-deep');
+  const remEl  = document.getElementById('api-leg-rem');
+  const ltEl   = document.getElementById('api-leg-lt');
+  const awkEl  = document.getElementById('api-leg-awk');
+  if (deepEl) deepEl.textContent = fmt(deep);
+  if (remEl)  remEl.textContent  = fmt(rem);
+  if (ltEl)   ltEl.textContent   = fmt(light);
+  if (awkEl)  awkEl.textContent  = fmt(awk);
 }
 
 function updateActivity(ac) {
@@ -3679,19 +3693,17 @@ function updateActivity(ac) {
 function updateSleepSessions(allSessions, today) {
   const el = document.getElementById('api-sleep-sessions');
   if (!el) return;
-  const sessions = allSessions.filter(s => s.day === today || s.day === today)
+  const sessions = allSessions.filter(s => s.day === today)
     .sort((a,b) => new Date(a.bedtime_start) - new Date(b.bedtime_start));
   if (!sessions.length) { el.innerHTML = ''; return; }
-  const typeLabel = { long_sleep:'夜の睡眠', nap:'昼寝', rest:'休息', sleep:'睡眠' };
-  const typeColor = { long_sleep:'var(--bl)', nap:'var(--tl)', rest:'var(--ink3)', sleep:'var(--bl)' };
+  const typeColor = { long_sleep:'var(--bl)', nap:'var(--tl)', rest:'var(--ink4)', sleep:'var(--bl)' };
   el.innerHTML = sessions.map(s => {
-    const label = typeLabel[s.type] || s.type;
     const color = typeColor[s.type] || 'var(--ink3)';
     const dur   = fmt(s.total_sleep_duration);
     const start = fmtTime(s.bedtime_start);
     const end   = fmtTime(s.bedtime_end);
-    return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(0,0,0,0.05)">
-      <span style="font-size:9px;font-family:var(--fm);color:${color};font-weight:600;width:52px;flex-shrink:0">${label}</span>
+    return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(0,0,0,0.04)">
+      <span style="width:3px;height:24px;border-radius:2px;background:${color};flex-shrink:0"></span>
       <span style="font-family:var(--fm);font-size:9px;color:var(--ink2)">${start} – ${end}</span>
       <span style="font-family:var(--fm);font-size:9px;color:var(--ink3);margin-left:auto">${dur}</span>
     </div>`;
@@ -3717,13 +3729,16 @@ function updateSleepDebt(sevenDaySleep, today) {
 
   days.forEach((dateStr, i) => {
     const entry = sevenDaySleep.find(s => s.day === dateStr);
-    const dur   = entry?.total_sleep_duration || 0;
+    const dur   = entry?.total_sleep_duration ?? null;
     const isToday = dateStr === today;
-    const met   = dur >= TARGET;
-    const pct   = Math.min(100, (dur / maxH) * 100);
-    const deficit = Math.max(0, TARGET - dur);
-    totalDeficit += deficit;
-    if (dur > 0 && !met) shortNights++;
+    const met   = dur !== null && dur >= TARGET;
+    const pct   = dur !== null ? Math.min(100, (dur / maxH) * 100) : 0;
+    // データのない日（未来・未同期）は不足としてカウントしない
+    if (dur !== null) {
+      const deficit = Math.max(0, TARGET - dur);
+      totalDeficit += deficit;
+      if (!met) shortNights++;
+    }
 
     const color = dur === 0 ? 'rgba(0,0,0,0.08)'
       : met ? 'rgba(58,125,90,0.55)' : 'rgba(212,98,42,0.55)';
