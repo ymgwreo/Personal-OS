@@ -247,8 +247,8 @@ async function handleGetIntegrations(env, session) {
 async function handleSaveOuraPAT(request, env, session) {
   const body = await request.json().catch(() => ({}));
   const { token } = body;
-  if (!token || typeof token !== 'string' || !token.startsWith('oura_')) {
-    return json({ error: 'Invalid Oura PAT — must start with oura_' }, 400);
+  if (!token || typeof token !== 'string' || token.trim().length < 10) {
+    return json({ error: 'Invalid token' }, 400);
   }
   const now = Math.floor(Date.now() / 1000);
   await env.DB.prepare(`
