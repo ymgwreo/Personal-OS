@@ -8742,9 +8742,16 @@ async function initHealth() {
     };
     generateAIReview(aiPayload, today);
   } catch(e) {
-    if (e.code === 'NO_TOKEN')      lgShowStep('oura');
-    else if (e.code === 'INVALID_TOKEN') lgShowStep('oura', 'トークンが無効です。新しいトークンを入力してください');
-    else console.error('Oura fetch error:', e);
+    if (e.code === 'NO_TOKEN' || e.code === 'INVALID_TOKEN') {
+      // Already logged in — show Oura setup in-page, not the login gate
+      const msg = e.code === 'INVALID_TOKEN' ? 'トークンが無効です。新しいトークンを入力してください' : '';
+      if (posSession()) {
+        showSetup();
+        if (msg) showError(msg);
+      } else {
+        lgShowStep('oura', msg);
+      }
+    } else console.error('Oura fetch error:', e);
   }
 }
 
