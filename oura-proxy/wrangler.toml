@@ -1,3 +1,8 @@
 name = "muddy-boat-633b"
 main = "worker.js"
 compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "personal-os-db"
+database_id = "0858ab63-baa9-4421-ba98-bfa4ca0d21ff"
