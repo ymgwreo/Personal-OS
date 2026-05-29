@@ -8778,12 +8778,29 @@ async function setupConnect() {
   if (!tok) { showError('トークンを入力してください'); return; }
   const session = posSession();
   if (session) {
-    const res = await fetch(`${WORKER_BASE}/api/integrations/oura`, {
-      method:  'POST',
-      headers: { ...posAuthHeader(), 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ token: tok })
-    });
-    if (!res.ok) { showError('保存に失敗しました。再度お試しください'); return; }
+    try {
+      const res  = await fetch(`${WORKER_BASE}/api/integrations/oura`, {
+        method:  'POST',
+        headers: { ...posAuthHeader(), 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ token: tok })
+      });
+      if (!res.ok) {
+        const detail = await res.json().catch(() => ({}));
+        // Fallback: save locally and warn
+        localStorage.setItem('oura-pat', tok);
+        showError(`サーバー保存失敗(${res.status})—ローカルに保存しました`);
+        // Still continue to load health
+        hideSetup();
+        initHealth();
+        return;
+      }
+    } catch (e) {
+      localStorage.setItem('oura-pat', tok);
+      showError('ネットワークエラー—ローカルに保存しました');
+      hideSetup();
+      initHealth();
+      return;
+    }
   } else {
     localStorage.setItem('oura-pat', tok);
   }
