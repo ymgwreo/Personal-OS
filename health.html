@@ -595,7 +595,7 @@ body::after {
 /* ═══ INPUT SYSTEM ═══ */
 .input-dock {
   position: fixed;
-  bottom: 0; left: 40px; right: 0;   /* 40px = sidebar width */
+  bottom: 0; left: 54px; right: 0;
   z-index: 150;
   border-top: 1px solid rgba(255,255,255,0.4);
   background: rgba(200,205,212,0.72);
@@ -2832,10 +2832,10 @@ body.dashboard #h-daily .kpi-delta {
       <span class="hpb"    onclick="setHealthPeriod('X',this)">Detail</span>
       <span class="hpb"    onclick="setHealthPeriod('C',this)" style="border-left:1px solid rgba(0,0,0,0.08);margin-left:4px;padding-left:10px">Calibration</span>
       <button class="top-btn" onclick="syncOura(true)" style="margin-left:8px;border-left:1px solid rgba(0,0,0,0.08);padding-left:12px;border-radius:0;background:transparent;border-top:none;border-right:none;border-bottom:none">Sync</button>
-      <button class="top-btn" id="lang-btn" onclick="toggleLang()" style="font-family:var(--fm);font-size:9px;font-weight:700;letter-spacing:0.5px">JP</button>
     </div>
     <div class="top-r">
-      <button class="top-btn" onclick="openModal()">＋ Widget</button>
+      <button class="top-btn" id="lang-btn" onclick="toggleLang()" style="font-family:var(--fm);font-size:9px;font-weight:700;letter-spacing:0.5px">JP</button>
+      <button class="top-btn" onclick="openModal()">＋ <span class="en">Widget</span><span class="ja">ウィジェット</span></button>
       <button class="top-btn am" id="voice-top" onclick="toggleInputDock()">Talk</button>
     </div>
   </div>
@@ -2859,10 +2859,10 @@ body.dashboard #h-daily .kpi-delta {
             <div class="cm" onclick="if(currentRunningId)completeTaskById(currentRunningId)">+</div>
           </div>
           <div style="font-size:13px;font-weight:700;color:var(--t1);margin-bottom:2px;line-height:1.3" id="home-running-name">—</div>
-          <div style="font-size:9px;color:var(--t2);font-family:var(--fm)" id="home-running-sub">タスクなし</div>
+          <div style="font-size:9px;color:var(--t2);font-family:var(--fm)" id="home-running-sub"><span class="en">No task</span><span class="ja">タスクなし</span></div>
           <div style="display:flex;gap:4px;margin-top:7px">
-            <button class="top-btn" style="height:24px;font-size:9px" onclick="if(currentRunningId)pauseTaskById(currentRunningId)">Pause</button>
-            <button class="top-btn" style="height:24px;font-size:9px" onclick="if(currentRunningId)completeTaskById(currentRunningId)">Done</button>
+            <button class="top-btn" style="height:24px;font-size:9px" onclick="if(currentRunningId)pauseTaskById(currentRunningId)"><span class="en">Pause</span><span class="ja">一時停止</span></button>
+            <button class="top-btn" style="height:24px;font-size:9px" onclick="if(currentRunningId)completeTaskById(currentRunningId)"><span class="en">Done</span><span class="ja">完了</span></button>
           </div>
         </div>
 
@@ -2881,14 +2881,14 @@ body.dashboard #h-daily .kpi-delta {
           <div style="display:flex;align-items:center;gap:8px">
             <div style="font-size:22px;font-weight:700;color:var(--t1);letter-spacing:-1px;font-family:var(--fm);line-height:1">22°</div>
             <div>
-              <div style="font-size:9px;color:var(--t2)">Partly cloudy</div>
+              <div style="font-size:9px;color:var(--t2)"><span class="en">Partly cloudy</span><span class="ja">時々曇り</span></div>
               <div style="font-size:8px;color:var(--t3);font-family:var(--fm)">Tokyo</div>
             </div>
           </div>
           <div style="display:flex;gap:8px;margin-top:6px;padding-top:6px;border-top:1px solid var(--b1)">
-            <div style="flex:1;text-align:center"><div style="font-size:10px;font-weight:600;color:var(--t1);font-family:var(--fm)">68%</div><div style="font-size:7px;color:var(--t3);text-transform:uppercase;letter-spacing:0.5px">Humid</div></div>
-            <div style="flex:1;text-align:center"><div style="font-size:10px;font-weight:600;color:var(--t1);font-family:var(--fm)">UV4</div><div style="font-size:7px;color:var(--t3);text-transform:uppercase;letter-spacing:0.5px">Index</div></div>
-            <div style="flex:1;text-align:center"><div style="font-size:10px;font-weight:600;color:var(--t1);font-family:var(--fm)">NW</div><div style="font-size:7px;color:var(--t3);text-transform:uppercase;letter-spacing:0.5px">Wind</div></div>
+            <div style="flex:1;text-align:center"><div style="font-size:10px;font-weight:600;color:var(--t1);font-family:var(--fm)">68%</div><div style="font-size:7px;color:var(--t3);text-transform:uppercase;letter-spacing:0.5px"><span class="en">Humid</span><span class="ja" style="text-transform:none">湿度</span></div></div>
+            <div style="flex:1;text-align:center"><div style="font-size:10px;font-weight:600;color:var(--t1);font-family:var(--fm)">UV4</div><div style="font-size:7px;color:var(--t3);text-transform:uppercase;letter-spacing:0.5px"><span class="en">Index</span><span class="ja" style="text-transform:none">UV</span></div></div>
+            <div style="flex:1;text-align:center"><div style="font-size:10px;font-weight:600;color:var(--t1);font-family:var(--fm)">NW</div><div style="font-size:7px;color:var(--t3);text-transform:uppercase;letter-spacing:0.5px"><span class="en">Wind</span><span class="ja" style="text-transform:none">風</span></div></div>
           </div>
         </div>
 
@@ -2906,9 +2906,9 @@ body.dashboard #h-daily .kpi-delta {
               </div>
             </div>
             <div style="flex:1">
-              <div style="font-size:9px;color:var(--am);font-family:var(--fm);font-weight:700;margin-bottom:4px">Focus #3</div>
+              <div style="font-size:9px;color:var(--am);font-family:var(--fm);font-weight:700;margin-bottom:4px"><span class="en">Focus #3</span><span class="ja">集中 #3</span></div>
               <div style="display:flex;gap:3px">
-                <button class="top-btn" style="height:22px;font-size:9px;flex:1" id="pomo-btn" onclick="togglePomo()"> Start</button>
+                <button class="top-btn" style="height:22px;font-size:9px;flex:1" id="pomo-btn" onclick="togglePomo()"><span class="en"> Start</span><span class="ja"> 開始</span></button>
                 <button class="top-btn" style="height:22px;font-size:9px" onclick="resetPomo()">↺</button>
               </div>
               <div style="display:flex;gap:2px;margin-top:5px">
@@ -2928,7 +2928,7 @@ body.dashboard #h-daily .kpi-delta {
 
         <!-- Today Progress -->
         <div class="c" id="w-progress">
-          <div class="ch"><span class="ct">Today</span><div class="cm" onclick="removeW('w-progress')">×</div></div>
+          <div class="ch"><span class="ct"><span class="en">Today</span><span class="ja">今日</span></span><div class="cm" onclick="removeW('w-progress')">×</div></div>
           <div style="display:flex;gap:10px;align-items:center">
             <svg width="50" height="50" viewBox="0 0 50 50">
               <circle class="rbg" cx="25" cy="25" r="19" stroke-width="6"/>
@@ -2936,16 +2936,16 @@ body.dashboard #h-daily .kpi-delta {
               <text x="25" y="29" text-anchor="middle" font-family="DM Mono" font-size="11" font-weight="600" fill="var(--t1)">25%</text>
             </svg>
             <div style="flex:1">
-              <div style="font-size:9px;color:var(--t2);margin-bottom:3px;font-family:var(--fm)">1 / 4 tasks</div>
-              <div style="font-size:9px;color:var(--t2);margin-bottom:3px;font-family:var(--fm)">Focus: 1h 20m</div>
-              <div style="font-size:9px;color:var(--t2);font-family:var(--fm)">Steps: 8,432</div>
+              <div style="font-size:9px;color:var(--t2);margin-bottom:3px;font-family:var(--fm)">1 / 4 <span class="en">tasks</span><span class="ja">タスク</span></div>
+              <div style="font-size:9px;color:var(--t2);margin-bottom:3px;font-family:var(--fm)"><span class="en">Focus</span><span class="ja">集中</span>: 1h 20m</div>
+              <div style="font-size:9px;color:var(--t2);font-family:var(--fm)"><span class="en">Steps</span><span class="ja">歩数</span>: 8,432</div>
             </div>
           </div>
         </div>
 
         <!-- Tasks mini -->
         <div class="c c2" id="w-tasks">
-          <div class="ch"><span class="ct">Today's Tasks</span><div class="cm" onclick="go(document.querySelectorAll('.sb-i')[2],'tasks')">↗</div></div>
+          <div class="ch"><span class="ct"><span class="en">Today's Tasks</span><span class="ja">今日のタスク</span></span><div class="cm" onclick="go(document.querySelectorAll('.sb-i')[2],'tasks')">↗</div></div>
           <div id="tasks-mini-body"></div>
         </div>
 
@@ -2983,7 +2983,7 @@ body.dashboard #h-daily .kpi-delta {
               <text x="22" y="26" text-anchor="middle" font-family="DM Mono" font-size="10" font-weight="600" fill="var(--t1)">84</text>
             </svg>
             <div>
-              <div style="font-size:10px;color:var(--t2);margin-bottom:4px">7h 24m · Good</div>
+              <div style="font-size:10px;color:var(--t2);margin-bottom:4px">7h 24m · <span class="en">Good</span><span class="ja">良好</span></div>
               <div class="ss">
                 <div class="ssg" style="flex:2;background:var(--sl-awk)"></div>
                 <div class="ssg" style="flex:10;background:var(--sl-rem)"></div>
@@ -3036,7 +3036,7 @@ body.dashboard #h-daily .kpi-delta {
 
       <!-- Row 4: 24h Timeline mini -->
       <div class="mb">
-        <div class="sec-lbl">Today's Timeline</div>
+        <div class="sec-lbl"><span class="en">Today's Timeline</span><span class="ja">今日のタイムライン</span></div>
         <div class="c">
           <div style="overflow-x:auto">
             <div style="display:flex;flex-direction:column;gap:3px;min-width:600px">
@@ -3073,7 +3073,7 @@ body.dashboard #h-daily .kpi-delta {
       </div>
 
       <!-- Sleep AI Review -->
-      <div class="sec-lbl">Sleep AI Review</div>
+      <div class="sec-lbl"><span class="en">Sleep AI Review</span><span class="ja">睡眠AIレビュー</span></div>
       <div class="c mb" style="border-left:2px solid rgba(196,154,30,0.4)">
         <div style="display:flex;align-items:flex-start;gap:10px">
           <div style="flex-shrink:0;padding-top:2px;font-size:12px;color:var(--am)">•</div>
@@ -3109,7 +3109,7 @@ body.dashboard #h-daily .kpi-delta {
       <!-- Add widget -->
       <div onclick="openModal()" style="border:1.5px dashed var(--b2);border-radius:var(--r);padding:10px;text-align:center;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all 0.13s" onmouseover="this.style.borderColor='var(--am)';this.style.background='var(--am4)'" onmouseout="this.style.borderColor='var(--b2)';this.style.background=''">
         <span style="font-size:14px;color:var(--t3)">＋</span>
-        <span style="font-size:10px;color:var(--t3);font-family:var(--fm)">Add Widget</span>
+        <span style="font-size:10px;color:var(--t3);font-family:var(--fm)"><span class="en">Add Widget</span><span class="ja">ウィジェット追加</span></span>
       </div>
 
     </div>
@@ -3130,20 +3130,20 @@ body.dashboard #h-daily .kpi-delta {
         <!-- Dividers + KPI inline -->
         <div style="width:1px;height:20px;background:rgba(0,0,0,0.1);margin:0 14px;flex-shrink:0"></div>
         <div style="display:flex;align-items:baseline;gap:4px;flex-shrink:0">
-          <span style="font-size:9px;color:var(--t3);font-family:var(--fm);text-transform:uppercase;letter-spacing:0.8px">Done</span>
+          <span style="font-size:9px;color:var(--t3);font-family:var(--fm);text-transform:uppercase;letter-spacing:0.8px"><span class="en">Done</span><span class="ja" style="text-transform:none">完了</span></span>
           <span style="font-size:16px;font-weight:600;color:var(--t1);font-family:var(--fm);letter-spacing:-0.5px;line-height:1" id="kpi-done">0</span>
           <span style="font-size:10px;color:var(--t3);font-family:var(--fm)">/ <span id="kpi-done-of">0</span></span>
         </div>
 
         <div style="width:1px;height:20px;background:rgba(0,0,0,0.1);margin:0 14px;flex-shrink:0"></div>
         <div style="display:flex;align-items:baseline;gap:4px;flex-shrink:0">
-          <span style="font-size:9px;color:var(--t3);font-family:var(--fm);text-transform:uppercase;letter-spacing:0.8px">Focus</span>
+          <span style="font-size:9px;color:var(--t3);font-family:var(--fm);text-transform:uppercase;letter-spacing:0.8px"><span class="en">Focus</span><span class="ja" style="text-transform:none">集中</span></span>
           <span style="font-size:16px;font-weight:600;color:var(--t1);font-family:var(--fm);letter-spacing:-0.5px;line-height:1" id="kpi-focus">0m</span>
         </div>
 
         <div style="width:1px;height:20px;background:rgba(0,0,0,0.1);margin:0 14px;flex-shrink:0"></div>
         <div style="display:flex;align-items:baseline;gap:4px;flex-shrink:0">
-          <span style="font-size:9px;color:var(--t3);font-family:var(--fm);text-transform:uppercase;letter-spacing:0.8px">Rate</span>
+          <span style="font-size:9px;color:var(--t3);font-family:var(--fm);text-transform:uppercase;letter-spacing:0.8px"><span class="en">Rate</span><span class="ja" style="text-transform:none">達成率</span></span>
           <span style="font-size:16px;font-weight:600;color:var(--t1);font-family:var(--fm);letter-spacing:-0.5px;line-height:1" id="kpi-rate">—</span>
         </div>
 
@@ -3163,14 +3163,14 @@ body.dashboard #h-daily .kpi-delta {
       <div class="task-filter-bar" id="task-filter-bar">
         <input class="tf-search" id="tf-search" placeholder="Search tasks…" oninput="applyTaskFilter()" type="search">
         <div class="tf-sep"></div>
-        <span class="tf-pill on" data-pri="all"  onclick="setFilterPri(this,'all')">All</span>
+        <span class="tf-pill on" data-pri="all"  onclick="setFilterPri(this,'all')"><span class="en">All</span><span class="ja">全て</span></span>
         <span class="tf-pill high" data-pri="high" onclick="setFilterPri(this,'high')">HIGH</span>
         <span class="tf-pill med"  data-pri="med"  onclick="setFilterPri(this,'med')">MED</span>
         <span class="tf-pill low"  data-pri="low"  onclick="setFilterPri(this,'low')">LOW</span>
         <div class="tf-sep"></div>
         <div id="tf-tag-pills" style="display:flex;gap:4px"></div>
         <div style="margin-left:auto;display:flex;gap:5px">
-          <button class="task-btn" onclick="openTemplatesModal()" style="height:24px;font-size:9px;padding:2px 10px">Templates</button>
+          <button class="task-btn" onclick="openTemplatesModal()" style="height:24px;font-size:9px;padding:2px 10px"><span class="en">Templates</span><span class="ja">テンプレ</span></button>
         </div>
       </div>
 
@@ -3182,11 +3182,11 @@ body.dashboard #h-daily .kpi-delta {
 
           <!-- Session log (compact) -->
           <div class="c" style="padding:10px 12px;flex-shrink:0">
-            <div class="ct" style="margin-bottom:6px">Session Log</div>
+            <div class="ct" style="margin-bottom:6px"><span class="en">Session Log</span><span class="ja">セッションログ</span></div>
             <div style="font-family:var(--fm)">
               <div style="display:grid;grid-template-columns:1fr 44px;gap:0;margin-bottom:4px;padding-bottom:4px;border-bottom:1px solid var(--b2)">
-                <span style="font-size:9px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:0.8px">Task</span>
-                <span style="font-size:9px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:0.8px;text-align:right">Time</span>
+                <span style="font-size:9px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:0.8px"><span class="en">Task</span><span class="ja" style="text-transform:none">タスク</span></span>
+                <span style="font-size:9px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:0.8px;text-align:right"><span class="en">Time</span><span class="ja" style="text-transform:none">時間</span></span>
               </div>
               <div id="session-log-body"></div>
             </div>
@@ -3194,7 +3194,7 @@ body.dashboard #h-daily .kpi-delta {
 
           <!-- Habits (flex:1, scrolls internally if needed) -->
           <div class="c" style="padding:10px 12px;flex:1;overflow-y:auto" id="habit-list">
-            <div class="ct" style="margin-bottom:6px">Daily Habits</div>
+            <div class="ct" style="margin-bottom:6px"><span class="en">Daily Habits</span><span class="ja">デイリー習慣</span></div>
             <div class="ti"><div class="tck" onclick="tgl(this)" data-habit="サプリ"></div><div class="tn">サプリ</div><span class="habit-status">—</span></div>
             <div class="ti"><div class="tck" onclick="tgl(this)" data-habit="散歩"></div><div class="tn">散歩</div><span class="habit-status">—</span></div>
             <div class="ti"><div class="tck" onclick="tgl(this)" data-habit="英語"></div><div class="tn">英語</div><span class="habit-status">—</span></div>
@@ -4485,14 +4485,11 @@ body.dashboard #h-daily .kpi-delta {
 
     </div><!-- /view-C -->
 
-  </div><!-- /main -->
-</div><!-- /layout -->
-
-    </div><!-- /scr-health -->
+  </div><!-- /scr-health -->
 
         <!-- ══════ JOURNAL ══════ -->
     <div class="scr" id="scr-journal">
-      <div class="sec-lbl">Today's Stream</div>
+      <div class="sec-lbl"><span class="en">Today's Stream</span><span class="ja">今日の記録</span></div>
       <div class="c mb" id="journal-stream">
         <div class="je">
           <div class="je-top"><span class="je-time">09:14</span><span class="je-src">Voice</span><span class="tag" style="background:rgba(78,126,200,0.15);color:var(--bl)">Think</span></div>
@@ -4507,7 +4504,7 @@ body.dashboard #h-daily .kpi-delta {
           <div class="je-text">Daily Habitのチェックボックスは毎日0:00で自動リセットされる設計が良い。継続率の可視化も欲しい。</div>
         </div>
       </div>
-      <div class="sec-lbl">Notes</div>
+      <div class="sec-lbl"><span class="en">Notes</span><span class="ja">ノート</span></div>
       <div class="note-grid" id="notes-grid">
         <div class="nc" style="background:#D4D0BA"><div class="nc-t">Personal OS 設計メモ</div><div class="nc-p">タスクステータスは5段階: Wishlist → Pending → Running → Done → Archive</div><div class="nc-m">Apr 22</div></div>
         <div class="nc" style="background:#C4CCBA"><div class="nc-t">英語学習プラン</div><div class="nc-p">毎日50単語。週1回リスニング集中デー。シャドーイングを朝に。</div><div class="nc-m">Apr 21</div></div>
@@ -4521,19 +4518,19 @@ body.dashboard #h-daily .kpi-delta {
       <div id="analytics-weekly">
       <div class="g4">
         <div class="c"><div class="ch"><span class="ct">Study / Week</span></div><div class="kv">14.5<span style="font-size:14px">h</span></div><span class="kd up">↑ +2.3h</span></div>
-        <div class="c"><div class="ch"><span class="ct">Task Rate</span></div><div class="kv">78<span style="font-size:14px">%</span></div><span class="kd up">↑ +12%</span></div>
-        <div class="c"><div class="ch"><span class="ct">Streak</span></div><div class="kv">4<span style="font-size:16px;font-family:var(--ff);font-weight:500">days</span></div><div class="ku">Best: 7 days</div></div>
-        <div class="c"><div class="ch"><span class="ct">Focus Time</span></div><div class="kv">3h 20m</div><div class="ku">today</div></div>
+        <div class="c"><div class="ch"><span class="ct"><span class="en">Task Rate</span><span class="ja">タスク達成率</span></span></div><div class="kv">78<span style="font-size:14px">%</span></div><span class="kd up">↑ +12%</span></div>
+        <div class="c"><div class="ch"><span class="ct">Streak</span></div><div class="kv">4<span style="font-size:16px;font-family:var(--ff);font-weight:500"><span class="en">days</span><span class="ja">日</span></span></div><div class="ku"><span class="en">Best: 7 days</span><span class="ja">最高: 7日</span></div></div>
+        <div class="c"><div class="ch"><span class="ct"><span class="en">Focus Time</span><span class="ja">集中時間</span></span></div><div class="kv">3h 20m</div><div class="ku"><span class="en">today</span><span class="ja">本日</span></div></div>
       </div>
       <div class="g21">
         <div class="c" style="display:flex;flex-direction:column">
-          <div class="ch"><span class="ct">Tag Breakdown — This Week</span><span style="font-size:8px;color:var(--t3);font-family:var(--fm)">14.5h total</span></div>
+          <div class="ch"><span class="ct"><span class="en">Tag Breakdown — This Week</span><span class="ja">タグ別 — 今週</span></span><span style="font-size:8px;color:var(--t3);font-family:var(--fm)">14.5h <span class="en">total</span><span class="ja">合計</span></span></div>
           <div class="bl" style="gap:9px">
             <div class="br"><span class="bl-l">Coding</span><div class="bt" style="height:6px"><div class="bf" style="width:100%;background:var(--t2)"></div></div><span class="bv" style="width:36px">8.0h</span><span style="font-size:8px;color:var(--t3);font-family:var(--fm);width:24px;text-align:right">55%</span></div>
             <div class="br"><span class="bl-l">英語</span><div class="bt" style="height:6px"><div class="bf" style="width:56%;background:var(--bl)"></div></div><span class="bv" style="width:36px">4.5h</span><span style="font-size:8px;color:var(--t3);font-family:var(--fm);width:24px;text-align:right">31%</span></div>
             <div class="br"><span class="bl-l">読書</span><div class="bt" style="height:6px"><div class="bf" style="width:25%;background:var(--tl)"></div></div><span class="bv" style="width:36px">2.0h</span><span style="font-size:8px;color:var(--t3);font-family:var(--fm);width:24px;text-align:right">14%</span></div>
           </div>
-          <div class="sec-lbl" style="margin-top:10px">Weekly Activity</div>
+          <div class="sec-lbl" style="margin-top:10px"><span class="en">Weekly Activity</span><span class="ja">週間活動</span></div>
           <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
             <div style="text-align:center;padding:6px 2px;border-radius:5px;background:var(--s2)"><div style="font-size:7px;color:var(--t3);margin-bottom:2px;font-family:var(--fm)">M</div><div style="font-size:11px;font-weight:700;color:var(--t1);font-family:var(--fm)">16</div><div style="width:5px;height:5px;border-radius:50%;background:var(--gr);margin:3px auto 0"></div></div>
             <div style="text-align:center;padding:6px 2px;border-radius:5px;background:var(--s2)"><div style="font-size:7px;color:var(--t3);margin-bottom:2px;font-family:var(--fm)">T</div><div style="font-size:11px;font-weight:700;color:var(--t1);font-family:var(--fm)">17</div><div style="width:5px;height:5px;border-radius:50%;background:var(--bl);margin:3px auto 0"></div></div>
@@ -4553,7 +4550,7 @@ body.dashboard #h-daily .kpi-delta {
             </div>
           </div>
           <div class="c" style="flex:1;display:flex;flex-direction:column;min-height:0">
-            <div class="ch"><span class="ct">Recovery Trend</span></div>
+            <div class="ch"><span class="ct"><span class="en">Recovery Trend</span><span class="ja">回復トレンド</span></span></div>
             <div class="sp" id="recovery-sp" style="flex:1;min-height:60px"></div>
           </div>
         </div>
@@ -4561,7 +4558,7 @@ body.dashboard #h-daily .kpi-delta {
       </div><!-- /analytics-weekly -->
 
       <div id="analytics-tags" style="display:none">
-        <div class="sec-lbl">Tag Breakdown</div>
+        <div class="sec-lbl"><span class="en">Tag Breakdown</span><span class="ja">タグ別集計</span></div>
         <div class="c">
           <div class="bl" style="gap:9px">
             <div class="br"><span class="bl-l">Coding</span><div class="bt" style="height:6px"><div class="bf" style="width:100%;background:var(--t2)"></div></div><span class="bv" style="width:36px">8.0h</span><span style="font-size:8px;color:var(--t3);font-family:var(--fm);width:24px;text-align:right">55%</span></div>
@@ -4572,23 +4569,23 @@ body.dashboard #h-daily .kpi-delta {
       </div>
 
       <div id="analytics-trends" style="display:none">
-        <div class="sec-lbl">Monthly Trends</div>
-        <div class="c" style="text-align:center;padding:40px;color:var(--t3);font-family:var(--fm);font-size:11px">Trends — データ蓄積後に表示</div>
+        <div class="sec-lbl"><span class="en">Monthly Trends</span><span class="ja">月間トレンド</span></div>
+        <div class="c" style="text-align:center;padding:40px;color:var(--t3);font-family:var(--fm);font-size:11px"><span class="en">Trends — Available after data accumulates</span><span class="ja">Trends — データ蓄積後に表示</span></div>
       </div>
 
       <div id="analytics-ai" style="display:none">
-        <div class="sec-lbl">AI Weekly Review</div>
+        <div class="sec-lbl"><span class="en">AI Weekly Review</span><span class="ja">AI 週次レビュー</span></div>
         <div class="c mb">
           <div style="background:var(--am4);border-radius:6px;padding:12px;border-left:2px solid rgba(196,154,30,0.4);margin-bottom:12px" id="ai-review-output">
             <div style="font-size:9px;font-weight:700;color:var(--am);margin-bottom:6px;font-family:var(--fm)">• Weekly Insight</div>
-            <div style="font-size:10px;color:var(--t2);line-height:1.6">Generate ボタンで今週の振り返りを生成します。</div>
+            <div style="font-size:10px;color:var(--t2);line-height:1.6"><span class="en">Press Generate to create this week's review.</span><span class="ja">Generate ボタンで今週の振り返りを生成します。</span></div>
           </div>
-          <button class="btn-a" style="width:100%" onclick="generateWeeklyReview()">Generate</button>
+          <button class="btn-a" style="width:100%" onclick="generateWeeklyReview()"><span class="en">Generate</span><span class="ja">生成</span></button>
         </div>
-        <div class="sec-lbl">Mood / Energy (30 days)</div>
+        <div class="sec-lbl"><span class="en">Mood / Energy (30 days)</span><span class="ja">気分・エネルギー (30日)</span></div>
         <div class="c">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-            <span style="font-size:9px;color:var(--t3);font-family:var(--fm)">Energy level from daily check-ins</span>
+            <span style="font-size:9px;color:var(--t3);font-family:var(--fm)"><span class="en">Energy level from daily check-ins</span><span class="ja">毎日のチェックインから</span></span>
           </div>
           <svg id="mood-graph-svg" viewBox="0 0 400 80" style="width:100%;height:80px;overflow:visible"></svg>
           <div style="display:flex;gap:14px;margin-top:5px">
@@ -4608,11 +4605,11 @@ body.dashboard #h-daily .kpi-delta {
     <!-- ══════ GOALS / OKR ══════ -->
     <div class="scr" id="scr-goals">
       <div class="goals-period-bar" id="goals-period-bar">
-        <span class="tf-pill on" onclick="setGoalsPeriod(this,'all')">All</span>
-        <span class="tf-pill"    onclick="setGoalsPeriod(this,'weekly')">Weekly</span>
-        <span class="tf-pill"    onclick="setGoalsPeriod(this,'monthly')">Monthly</span>
-        <span class="tf-pill"    onclick="setGoalsPeriod(this,'quarterly')">Quarterly</span>
-        <button class="task-btn" style="margin-left:auto;height:26px;font-size:9px" onclick="openAddObjectiveModal()">+ Objective</button>
+        <span class="tf-pill on" onclick="setGoalsPeriod(this,'all')"><span class="en">All</span><span class="ja">全て</span></span>
+        <span class="tf-pill"    onclick="setGoalsPeriod(this,'weekly')"><span class="en">Weekly</span><span class="ja">週次</span></span>
+        <span class="tf-pill"    onclick="setGoalsPeriod(this,'monthly')"><span class="en">Monthly</span><span class="ja">月次</span></span>
+        <span class="tf-pill"    onclick="setGoalsPeriod(this,'quarterly')"><span class="en">Quarterly</span><span class="ja">四半期</span></span>
+        <button class="task-btn" style="margin-left:auto;height:26px;font-size:9px" onclick="openAddObjectiveModal()"><span class="en">+ Objective</span><span class="ja">+ 目標追加</span></button>
       </div>
       <div class="goals-grid" id="goals-grid"></div>
     </div>
@@ -4620,8 +4617,8 @@ body.dashboard #h-daily .kpi-delta {
     <!-- ══════ ROUTINE MANAGER ══════ -->
     <div class="scr" id="scr-routine">
       <div class="routine-tabs">
-        <span class="routine-tab-btn on" onclick="setRoutineTab(this,'morning')">Morning</span>
-        <span class="routine-tab-btn"    onclick="setRoutineTab(this,'evening')">Evening</span>
+        <span class="routine-tab-btn on" onclick="setRoutineTab(this,'morning')"><span class="en">Morning</span><span class="ja">朝</span></span>
+        <span class="routine-tab-btn"    onclick="setRoutineTab(this,'evening')"><span class="en">Evening</span><span class="ja">夜</span></span>
       </div>
       <div class="routine-body" id="routine-body"></div>
     </div>
@@ -4631,23 +4628,23 @@ body.dashboard #h-daily .kpi-delta {
       <div style="padding:12px 14px;min-height:min-content">
         <div class="log-entry-form mb" id="log-entry-form">
           <div class="log-field">
-            <label class="tdd-label">Date</label>
+            <label class="tdd-label"><span class="en">Date</span><span class="ja">日付</span></label>
             <input class="log-input" id="log-date" type="date">
           </div>
           <div class="log-field">
-            <label class="tdd-label">Weight (kg)</label>
+            <label class="tdd-label"><span class="en">Weight (kg)</span><span class="ja">体重 (kg)</span></label>
             <input class="log-input" id="log-weight" type="number" placeholder="—" step="0.1" min="0">
           </div>
           <div class="log-field">
-            <label class="tdd-label">Water (glasses)</label>
+            <label class="tdd-label"><span class="en">Water (glasses)</span><span class="ja">水分 (杯)</span></label>
             <input class="log-input" id="log-water" type="number" placeholder="—" min="0">
           </div>
           <div class="log-field">
-            <label class="tdd-label">Sleep (hrs)</label>
+            <label class="tdd-label"><span class="en">Sleep (hrs)</span><span class="ja">睡眠 (h)</span></label>
             <input class="log-input" id="log-sleep" type="number" placeholder="—" step="0.5" min="0">
           </div>
           <div class="log-field">
-            <label class="tdd-label">Mood (1–5)</label>
+            <label class="tdd-label"><span class="en">Mood (1–5)</span><span class="ja">気分 (1–5)</span></label>
             <div class="mood-stars" id="log-mood-stars">
               <span class="mood-star" onclick="setLogMood(1)">★</span>
               <span class="mood-star" onclick="setLogMood(2)">★</span>
@@ -4657,24 +4654,24 @@ body.dashboard #h-daily .kpi-delta {
             </div>
           </div>
           <div class="log-field" style="grid-column:span 3">
-            <label class="tdd-label">Note</label>
+            <label class="tdd-label"><span class="en">Note</span><span class="ja">メモ</span></label>
             <input class="log-input" id="log-note" type="text" placeholder="Optional note…">
           </div>
           <div class="log-field" style="display:flex;align-items:flex-end">
-            <button class="btn-a" onclick="saveLogEntry()" style="width:100%;height:32px">Save</button>
+            <button class="btn-a" onclick="saveLogEntry()" style="width:100%;height:32px"><span class="en">Save</span><span class="ja">保存</span></button>
           </div>
         </div>
         <div class="c mb">
-          <div class="ch"><span class="ct">14-Day Log</span></div>
+          <div class="ch"><span class="ct"><span class="en">14-Day Log</span><span class="ja">14日間ログ</span></span></div>
           <table class="log-table" id="log-table">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Weight</th>
-                <th>Water</th>
-                <th>Sleep</th>
-                <th>Mood</th>
-                <th>Note</th>
+                <th><span class="en">Date</span><span class="ja">日付</span></th>
+                <th><span class="en">Weight</span><span class="ja">体重</span></th>
+                <th><span class="en">Water</span><span class="ja">水分</span></th>
+                <th><span class="en">Sleep</span><span class="ja">睡眠</span></th>
+                <th><span class="en">Mood</span><span class="ja">気分</span></th>
+                <th><span class="en">Note</span><span class="ja">メモ</span></th>
               </tr>
             </thead>
             <tbody id="log-table-body"></tbody>
@@ -4687,10 +4684,10 @@ body.dashboard #h-daily .kpi-delta {
     <!-- ══════ LIBRARY ══════ -->
     <div class="scr" id="scr-library">
       <div class="library-tabs">
-        <span class="library-tab on" onclick="setLibraryTab(this,'bookmarks')">Bookmarks</span>
-        <span class="library-tab"    onclick="setLibraryTab(this,'reading')">Reading</span>
-        <span class="library-tab"    onclick="setLibraryTab(this,'watching')">Watching</span>
-        <button class="task-btn" style="margin-left:auto;height:26px;font-size:9px" onclick="openAddLibraryItem()">+ Add</button>
+        <span class="library-tab on" onclick="setLibraryTab(this,'bookmarks')"><span class="en">Bookmarks</span><span class="ja">ブックマーク</span></span>
+        <span class="library-tab"    onclick="setLibraryTab(this,'reading')"><span class="en">Reading</span><span class="ja">読書中</span></span>
+        <span class="library-tab"    onclick="setLibraryTab(this,'watching')"><span class="en">Watching</span><span class="ja">視聴中</span></span>
+        <button class="task-btn" style="margin-left:auto;height:26px;font-size:9px" onclick="openAddLibraryItem()"><span class="en">+ Add</span><span class="ja">+ 追加</span></button>
       </div>
       <div class="library-body" id="library-body"></div>
     </div>
@@ -4698,18 +4695,18 @@ body.dashboard #h-daily .kpi-delta {
     <!-- ══════ SETTINGS ══════ -->
     <div class="scr" id="scr-settings">
       <div class="c mb">
-        <div class="ch"><span class="ct">Oura Ring</span><span id="s-oura-status" style="font-size:9px;font-family:var(--fm);color:var(--t3)">未接続</span></div>
+        <div class="ch"><span class="ct">Oura Ring</span><span id="s-oura-status" style="font-size:9px;font-family:var(--fm);color:var(--t3)"><span class="en">Not connected</span><span class="ja">未接続</span></span></div>
         <div style="font-size:10px;color:var(--t3);margin-bottom:10px">Personal Access Token (<a href="https://cloud.ouraring.com/personal-access-tokens" target="_blank" style="color:var(--bl);text-decoration:none">cloud.ouraring.com</a>)</div>
         <div class="h-token-row" style="max-width:460px">
           <input id="s-oura-token" type="password" class="h-token-input" placeholder="oura_pt_...">
-          <button class="h-connect-btn" onclick="sSaveOuraToken()">Save</button>
+          <button class="h-connect-btn" onclick="sSaveOuraToken()"><span class="en">Save</span><span class="ja">保存</span></button>
         </div>
-        <button onclick="hClearToken()" style="margin-top:8px;background:transparent;border:none;font-size:9px;color:var(--t3);cursor:pointer;font-family:var(--fm);text-decoration:underline;padding:0">トークンを削除</button>
+        <button onclick="hClearToken()" style="margin-top:8px;background:transparent;border:none;font-size:9px;color:var(--t3);cursor:pointer;font-family:var(--fm);text-decoration:underline;padding:0"><span class="en">Remove token</span><span class="ja">トークンを削除</span></button>
       </div>
       <div class="c mb">
         <div class="ch"><span class="ct">Focus Mode</span></div>
         <div class="settings-toggle-row">
-          <div><div class="settings-toggle-lbl">Auto-open Focus Mode</div><div class="settings-toggle-sub">Opens full-screen focus overlay when starting a task</div></div>
+          <div><div class="settings-toggle-lbl"><span class="en">Auto-open Focus Mode</span><span class="ja">フォーカスモード自動起動</span></div><div class="settings-toggle-sub"><span class="en">Opens full-screen focus overlay when starting a task</span><span class="ja">タスク開始時にフォーカスオーバーレイを自動表示</span></div></div>
           <div class="tog" id="focus-auto-tog" onclick="toggleFocusAutoSetting(this)"></div>
         </div>
       </div>
@@ -4730,12 +4727,12 @@ body.dashboard #h-daily .kpi-delta {
       </svg>
       <div class="focus-pomo-time" id="focus-pomo-time">25:00</div>
     </div>
-    <div class="focus-elapsed" id="focus-elapsed">Elapsed: 0m</div>
+    <div class="focus-elapsed" id="focus-elapsed"><span class="en">Elapsed: 0m</span><span class="ja">経過: 0m</span></div>
     <div class="focus-subtasks" id="focus-subtasks" style="display:none"></div>
     <div class="focus-btns">
-      <button class="focus-btn" id="focus-pause-btn" onclick="focusTogglePause()">⏸ Pause</button>
-      <button class="focus-btn am" onclick="focusComplete()">✓ Complete</button>
-      <button class="focus-btn exit" onclick="closeFocusMode()">Exit Focus</button>
+      <button class="focus-btn" id="focus-pause-btn" onclick="focusTogglePause()">⏸ <span class="en">Pause</span><span class="ja">一時停止</span></button>
+      <button class="focus-btn am" onclick="focusComplete()">&#10003; <span class="en">Complete</span><span class="ja">完了</span></button>
+      <button class="focus-btn exit" onclick="closeFocusMode()"><span class="en">Exit Focus</span><span class="ja">終了</span></button>
     </div>
   </div>
 
@@ -6420,7 +6417,7 @@ function renderTasks() {
           </div>
         </div>
         ${cards.map(t => renderCard(t)).join('')}
-        ${cards.length === 0 ? '<div class="empty-state">— empty —</div>' : ''}
+        ${cards.length === 0 ? `<div class="empty-state">${t('— empty —','— 空 —')}</div>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -6574,7 +6571,7 @@ function syncHomeWithTasks() {
     }
   }
   if (nameEl) nameEl.textContent = '—';
-  if (subEl)  subEl.textContent  = 'タスクなし';
+  if (subEl)  subEl.innerHTML   = t('No task','タスクなし');
   if (rnEl)   rnEl.textContent   = '—';
   if (slEl)   slEl.textContent   = '—';
   const timeEl = document.getElementById('task-running-time');
@@ -6736,7 +6733,7 @@ function openFocusMode(taskId) {
     const el = document.getElementById('focus-elapsed');
     if (!el || !taskStartTime) return;
     const ms = new Date() - taskStartTime;
-    el.textContent = 'Elapsed: ' + fmtDur(ms);
+    el.innerHTML = t('Elapsed: ','経過: ') + fmtDur(ms);
   }, 1000);
 }
 
@@ -7167,7 +7164,7 @@ function renderNotesBoard() {
       </div>
       <div class="notes-col-body" id="nbody-${col.key}">
         ${cards.map(n => renderNoteCard(n)).join('')}
-        ${cards.length === 0 ? '<div class="empty-state">— empty —</div>' : ''}
+        ${cards.length === 0 ? `<div class="empty-state">${t('— empty —','— 空 —')}</div>` : ''}
       </div>
       <div class="note-quick-form" id="nbquick-${col.key}" style="display:none">
         <textarea class="note-quick-input" id="nbinput-${col.key}" placeholder="Write a note… Enter to save"
@@ -7341,7 +7338,7 @@ function renderGoals() {
   if (!grid) return;
   const filtered = goalsFilter === 'all' ? goals : goals.filter(o => o.period === goalsFilter);
   if (!filtered.length) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1">No objectives yet. Click "+ Objective" to add one.</div>';
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">${t('No objectives yet. Click "+ Objective" to add one.','目標なし。"+ 目標追加" から登録できます。')}</div>`;
     return;
   }
   grid.innerHTML = filtered.map(obj => {
@@ -7355,8 +7352,8 @@ function renderGoals() {
         <div class="kr-bar-track"><div class="kr-bar-fill" style="width:${pct}%;background:${pct>=100?'var(--gr)':pct>=60?'var(--bl)':'var(--am)'}"></div></div>
         <div class="kr-meta">
           <span class="kr-vals">${kr.current} / ${kr.target} ${kr.unit}</span>
-          <span class="kr-linked">${(kr.linkedTaskIds||[]).length} tasks</span>
-          <button class="kr-edit-btn" onclick="openKrProgressModal('${obj.id}','${kr.id}');event.stopPropagation()">Update</button>
+          <span class="kr-linked">${(kr.linkedTaskIds||[]).length} ${t('tasks','タスク')}</span>
+          <button class="kr-edit-btn" onclick="openKrProgressModal('${obj.id}','${kr.id}');event.stopPropagation()">${t('Update','更新')}</button>
         </div>
       </div>`;
     }).join('');
@@ -7373,7 +7370,7 @@ function renderGoals() {
         <div style="text-align:right">
           <div style="font-size:20px;font-weight:700;color:var(--t1);font-family:var(--fm);letter-spacing:-1px">${overallPct}%</div>
           <div style="display:flex;gap:4px;justify-content:flex-end;margin-top:4px">
-            <button class="kr-edit-btn" onclick="openAddObjectiveModal('${obj.id}')">Edit</button>
+            <button class="kr-edit-btn" onclick="openAddObjectiveModal('${obj.id}')">${t('Edit','編集')}</button>
             <button class="kr-edit-btn" onclick="deleteObjective('${obj.id}')" style="color:var(--rd)">×</button>
           </div>
         </div>
@@ -7541,8 +7538,8 @@ function renderRoutine() {
 
   body.innerHTML = `
     <div class="routine-header-row">
-      <span style="font-size:13px;font-weight:600;color:var(--t1)">${routineTab === 'morning' ? 'Morning' : 'Evening'} Routine</span>
-      <span class="routine-duration-lbl">~${totalDur}m total</span>
+      <span style="font-size:13px;font-weight:600;color:var(--t1)">${routineTab === 'morning' ? t('Morning','朝') : t('Evening','夜')} ${t('Routine','ルーティン')}</span>
+      <span class="routine-duration-lbl">~${totalDur}m <span class="en">total</span><span class="ja">合計</span></span>
     </div>
     ${items.map(item => {
       const doneToday = (log[today] || {})[item.id];
@@ -7557,7 +7554,7 @@ function renderRoutine() {
         <button class="subtask-del" style="opacity:0.5" onclick="deleteRoutineItem('${item.id}')">×</button>
       </div>`;
     }).join('')}
-    <button class="routine-add-btn" onclick="addRoutineItem()">+ Add item</button>
+    <button class="routine-add-btn" onclick="addRoutineItem()"><span class="en">+ Add item</span><span class="ja">+ 追加</span></button>
   `;
 }
 
@@ -7692,14 +7689,14 @@ function renderLogSparklines() {
   if (!el) return;
   const log = Store.getManualLog().slice(0, 7).reverse();
   const metrics = [
-    { key:'weight', label:'Weight', unit:'kg',  color:'var(--am)', extract: e => e.weight },
-    { key:'water',  label:'Water',  unit:'L',   color:'var(--bl)', extract: e => e.water },
-    { key:'sleep',  label:'Sleep',  unit:'h',   color:'var(--tl)', extract: e => e.sleep },
-    { key:'mood',   label:'Mood',   unit:'★',  color:'var(--pu)', extract: e => e.mood },
+    { key:'weight', label:t('Weight','体重'), unit:'kg',  color:'var(--am)', extract: e => e.weight },
+    { key:'water',  label:t('Water','水分'),  unit:'L',   color:'var(--bl)', extract: e => e.water },
+    { key:'sleep',  label:t('Sleep','睡眠'),  unit:'h',   color:'var(--tl)', extract: e => e.sleep },
+    { key:'mood',   label:t('Mood','気分'),   unit:'★',  color:'var(--pu)', extract: e => e.mood },
   ];
   el.innerHTML = metrics.map(m => {
     const vals = log.map(m.extract).filter(v => v != null);
-    if (!vals.length) return `<div class="c" style="padding:10px 12px"><div class="ct" style="margin-bottom:4px">${m.label}</div><div style="font-size:11px;color:var(--t3)">No data</div></div>`;
+    if (!vals.length) return `<div class="c" style="padding:10px 12px"><div class="ct" style="margin-bottom:4px">${m.label}</div><div style="font-size:11px;color:var(--t3)">${t('No data','データなし')}</div></div>`;
     const max = Math.max(...vals, 1);
     const last = vals[vals.length-1];
     const sparkHTML = `<div class="log-sparkline">${vals.map(v => `<div class="log-spark-bar" style="height:${Math.round(v/max*100)}%;background:${m.color}"></div>`).join('')}</div>`;
@@ -7758,7 +7755,7 @@ function renderLibrary() {
 }
 
 function renderBookmarks(items, body) {
-  if (!items.length) { body.innerHTML = '<div class="empty-state">No bookmarks yet. Click "+ Add" to add one.</div>'; return; }
+  if (!items.length) { body.innerHTML = `<div class="empty-state">${t('No bookmarks yet. Click "+ Add" to add one.','ブックマークなし。"+ 追加" から登録できます。')}</div>`; return; }
   body.innerHTML = items.map(bm => {
     const domain = (() => { try { return new URL(bm.url).hostname; } catch(e) { return bm.url; } })();
     return `<div class="bookmark-item">
@@ -7775,7 +7772,7 @@ function renderBookmarks(items, body) {
 }
 
 function renderReadingList(items, body) {
-  if (!items.length) { body.innerHTML = '<div class="empty-state">No reading items yet.</div>'; return; }
+  if (!items.length) { body.innerHTML = `<div class="empty-state">${t('No reading items yet.','読書リストが空です。')}</div>`; return; }
   body.innerHTML = items.map(item => {
     const pct = item.total ? Math.round((item.progress||0)/item.total*100) : (item.progress||0);
     return `<div class="reading-item">
@@ -7799,10 +7796,10 @@ function renderReadingList(items, body) {
 }
 
 function renderWatchingList(items, body) {
-  if (!items.length) { body.innerHTML = '<div class="empty-state">No watching items yet.</div>'; return; }
+  if (!items.length) { body.innerHTML = `<div class="empty-state">${t('No watching items yet.','視聴リストが空です。')}</div>`; return; }
   body.innerHTML = items.map(item => {
     const pct = item.total ? Math.round((item.progress||0)/item.total*100) : (item.progress||0);
-    const typeIcon = item.type === 'movie' ? 'Movie' : item.type === 'series' ? 'Series' : 'Video';
+    const typeIcon = item.type === 'movie' ? t('Movie','映画') : item.type === 'series' ? t('Series','シリーズ') : t('Video','動画');
     return `<div class="reading-item">
       <div class="reading-header">
         <div>
@@ -8032,11 +8029,33 @@ function renderMoodGraph() {
    Health Dashboard JS (from health.html)
    ====================================== */
 /* ── LANGUAGE TOGGLE ── */
+function t(en, ja) {
+  return `<span class="en">${en}</span><span class="ja">${ja}</span>`;
+}
+function isJaLang() {
+  return document.body.classList.contains('lang-ja');
+}
+function updatePlaceholders() {
+  const ja = isJaLang();
+  const m = {
+    'tf-search':  [ja, 'タスクを検索…',       'Search tasks…'],
+    'log-note':   [ja, '任意のメモ…',          'Optional note…'],
+  };
+  Object.entries(m).forEach(([id,[flag,j,e]]) => {
+    const el = document.getElementById(id);
+    if (el) el.placeholder = flag ? j : e;
+  });
+  document.querySelectorAll('.note-quick-input').forEach(el => {
+    el.placeholder = ja ? 'メモを入力… Enter で保存' : 'Write a note… Enter to save';
+  });
+}
 function toggleLang() {
   const isJa = document.body.classList.toggle('lang-ja');
   document.getElementById('lang-btn').textContent = isJa ? 'EN' : 'JP';
   localStorage.setItem('health-lang', isJa ? 'ja' : 'en');
   toast(isJa ? '日本語モードに切り替えました' : 'Switched to English');
+  updatePlaceholders();
+  if (typeof renderRoutine === 'function') renderRoutine();
 }
 (function() {
   if (localStorage.getItem('health-lang') === 'ja') {

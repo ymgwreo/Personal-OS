@@ -42,21 +42,10 @@
   --pu: #8B5ED4;
 
   /* Sleep */
-  --sl-rem:  #9B6FE5;
+  --sl-rem:  #4E7EC8;
   --sl-lt:   #2E58A8;
   --sl-deep: #162848;
   --sl-awk:  #888B90;
-
-  /* Alias variables for health.html CSS compatibility */
-  --ink:   var(--t1);
-  --ink2:  var(--t2);
-  --ink3:  var(--t3);
-  --ink4:  var(--t4);
-  --card:  var(--s1);
-  --card2: rgba(255,255,255,0.45);
-  --am2:   rgba(212,98,42,0.12);
-  --line:  rgba(26,28,34,0.06);
-  --line2: rgba(26,28,34,0.04);
 
   /* Typography */
   --ff: 'Plus Jakarta Sans', sans-serif;
@@ -514,9 +503,8 @@ body::after {
 .c4  { grid-column: span 4; }
 
 /* ═══ HEALTH DASHBOARD ═══ */
-#scr-health.on { display: flex; flex-direction: column; }
-.float-fb { display: none; }
-#tw-launch { display: none; }
+#h-daily, #h-weekly, #h-monthly { display: flex; flex-direction: column; gap: var(--g); padding: 10px; }
+#h-weekly, #h-monthly { display: none; }
 .h-zones { display: grid; grid-template-columns: 172px 1fr 1fr 1.5fr; border-top: 1px solid var(--b2); padding-top: 11px; }
 .h-zone { padding: 0 16px; border-right: 1px solid var(--b2); }
 .h-zone:first-child { padding-left: 0; }
@@ -733,7 +721,7 @@ body::after {
   min-height: 260px;
 }
 .kanban-col {
-  flex-shrink: 0; width: 260px; height: 100%;
+  flex-shrink: 0; width: 185px; height: 100%;
   display: flex; flex-direction: column;
   background: rgba(255,255,255,0.35);
   border: 1px solid rgba(255,255,255,0.6); border-radius: var(--r);
@@ -784,28 +772,6 @@ body::after {
 .task-btn.danger         { color: var(--t3); }
 .task-btn.danger:hover   { background: rgba(212,78,78,0.15); color: var(--rd); border-color: rgba(212,78,78,0.3); }
 .task-timer  { font-size: 10px; color: var(--am); font-family: var(--fm); }
-
-/* ═══ TASK TIME LOG ═══ */
-.task-timelog {
-  margin: 5px 0 6px;
-  padding: 5px 8px;
-  background: rgba(0,0,0,0.03);
-  border-radius: 6px;
-  border-left: 2px solid rgba(0,0,0,0.07);
-  display: flex; flex-direction: column; gap: 1px;
-}
-.ttl-line {
-  font-size: 9px; color: var(--t2); font-family: var(--fm);
-  line-height: 1.85; display: flex; align-items: center; gap: 4px;
-}
-.ttl-arrow { color: var(--t4); font-size: 8px; }
-.ttl-dur   { color: var(--t3); margin-left: auto; font-size: 8px; }
-.ttl-total {
-  font-size: 9px; font-weight: 700; color: var(--t1);
-  font-family: var(--fm); margin-top: 3px; padding-top: 4px;
-  border-top: 1px solid rgba(0,0,0,0.07);
-  display: flex; align-items: center; gap: 4px;
-}
 .task-meta   { display: flex; align-items: center; gap: 4px; margin-bottom: 8px; flex-wrap: wrap; }
 .kanban-col-hd-info  { display: flex; align-items: center; gap: 6px; }
 .kanban-col-label    { font-size: 11px; font-weight: 600; }
@@ -899,11 +865,6 @@ body::after {
   pointer-events: none; z-index: 999; display: none; white-space: nowrap;
   box-shadow: 0 2px 10px rgba(0,0,0,0.15);
 }
-
-/* ── LANGUAGE ── */
-.ja { display: none; }
-body.lang-ja .ja { display: revert; }
-body.lang-ja .en { display: none; }
 </style>
 </head>
 <body>
@@ -936,7 +897,6 @@ body.lang-ja .en { display: none; }
       <span class="hpb"    onclick="setHealthPeriod('W',this)">W</span>
       <span class="hpb"    onclick="setHealthPeriod('M',this)">M</span>
       <button class="top-btn" onclick="syncOura(true)" style="margin-left:8px;border-left:1px solid rgba(0,0,0,0.08);padding-left:12px;border-radius:0;background:transparent;border-top:none;border-right:none;border-bottom:none">Sync</button>
-      <button class="top-btn" id="lang-btn" onclick="toggleLang()" style="font-family:var(--fm);font-size:9px;font-weight:700;letter-spacing:0.5px">JP</button>
     </div>
     <div class="top-r">
       <button class="top-btn" onclick="openModal()">＋ Widget</button>
@@ -1215,40 +1175,41 @@ body.lang-ja .en { display: none; }
     <!-- ══════ TASKS ══════ -->
     <div class="scr" id="scr-tasks">
 
-      <!-- Compact KPI bar -->
-      <div style="display:flex;align-items:center;gap:0;padding:0 12px;height:42px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.4);background:rgba(200,205,212,0.35)">
+      <!-- Top KPI strip -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px 10px 0;flex-shrink:0">
 
-        <!-- Running indicator -->
-        <div style="display:flex;align-items:center;gap:7px;min-width:0;flex:1">
-          <span class="running-dot" style="width:6px;height:6px;flex-shrink:0"></span>
-          <span class="kv sm" id="running-task-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px">—</span>
-          <span style="font-size:9px;color:var(--t3);font-family:var(--fm);flex-shrink:0" id="task-running-time">—</span>
+        <div class="c" style="padding:10px 12px">
+          <div class="ch" style="margin-bottom:5px">
+            <span class="ct">Running</span>
+            <span class="running-dot" style="width:6px;height:6px;flex-shrink:0"></span>
+          </div>
+          <div class="kv sm" id="running-task-name" style="margin-bottom:2px">—</div>
+          <div class="ku" id="task-running-time">—</div>
         </div>
 
-        <!-- Dividers + KPI inline -->
-        <div style="width:1px;height:20px;background:rgba(0,0,0,0.1);margin:0 14px;flex-shrink:0"></div>
-        <div style="display:flex;align-items:baseline;gap:4px;flex-shrink:0">
-          <span style="font-size:9px;color:var(--t3);font-family:var(--fm);text-transform:uppercase;letter-spacing:0.8px">Done</span>
-          <span style="font-size:16px;font-weight:600;color:var(--t1);font-family:var(--fm);letter-spacing:-0.5px;line-height:1" id="kpi-done">0</span>
-          <span style="font-size:10px;color:var(--t3);font-family:var(--fm)">/ <span id="kpi-done-of">0</span></span>
+        <div class="c" style="padding:10px 12px">
+          <div class="ch" style="margin-bottom:5px"><span class="ct">Today Done</span></div>
+          <div style="display:flex;align-items:baseline;gap:4px">
+            <div class="kv" id="kpi-done">0</div>
+            <div class="ku">/ <span id="kpi-done-of">0</span></div>
+          </div>
         </div>
 
-        <div style="width:1px;height:20px;background:rgba(0,0,0,0.1);margin:0 14px;flex-shrink:0"></div>
-        <div style="display:flex;align-items:baseline;gap:4px;flex-shrink:0">
-          <span style="font-size:9px;color:var(--t3);font-family:var(--fm);text-transform:uppercase;letter-spacing:0.8px">Focus</span>
-          <span style="font-size:16px;font-weight:600;color:var(--t1);font-family:var(--fm);letter-spacing:-0.5px;line-height:1" id="kpi-focus">0m</span>
+        <div class="c" style="padding:10px 12px">
+          <div class="ch" style="margin-bottom:5px"><span class="ct">Focus Time</span></div>
+          <div class="kv md" id="kpi-focus">0m</div>
+          <div class="ku">today</div>
         </div>
 
-        <div style="width:1px;height:20px;background:rgba(0,0,0,0.1);margin:0 14px;flex-shrink:0"></div>
-        <div style="display:flex;align-items:baseline;gap:4px;flex-shrink:0">
-          <span style="font-size:9px;color:var(--t3);font-family:var(--fm);text-transform:uppercase;letter-spacing:0.8px">Rate</span>
-          <span style="font-size:16px;font-weight:600;color:var(--t1);font-family:var(--fm);letter-spacing:-0.5px;line-height:1">—</span>
+        <div class="c" style="padding:10px 12px">
+          <div class="ch" style="margin-bottom:5px"><span class="ct">Weekly Rate</span></div>
+          <div class="kv">—</div>
         </div>
 
       </div>
 
       <!-- Main area: sidebar + board -->
-      <div style="flex:1;min-height:0;display:flex;gap:8px;padding:8px 10px 8px">
+      <div style="flex:1;min-height:0;display:flex;gap:8px;padding:8px 10px 10px">
 
         <!-- Left sidebar: session log + habits -->
         <div style="width:180px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;min-height:0">
@@ -2061,7 +2022,7 @@ function hwDragEnd(el)    {}
 /* ══════════════════════════════
    OURA INTEGRATION
 ══════════════════════════════ */
-const OURA_BASE = 'https://muddy-boat-633b.nxoxo-l-l-leo.workers.dev/v2/usercollection';
+const OURA_BASE = 'https://api.ouraring.com/v2/usercollection';
 
 function ouraToken() { return localStorage.getItem('oura-pat') || ''; }
 
@@ -2425,7 +2386,7 @@ async function syncOura(force = false) {
 
 function hSaveToken() {
   const input = document.getElementById('h-token-input');
-  const tok = input?.value.trim().replace(/[^\x00-\xFF]/g, '');
+  const tok = input?.value.trim();
   if (!tok) return;
   localStorage.setItem('oura-pat', tok);
   initHealthView();
@@ -2439,7 +2400,7 @@ function hClearToken() {
 }
 function sSaveOuraToken() {
   const input = document.getElementById('s-oura-token');
-  const tok = input?.value.trim().replace(/[^\x00-\xFF]/g, '');
+  const tok = input?.value.trim();
   if (!tok) return;
   localStorage.setItem('oura-pat', tok);
   toast('Oura トークンを保存しました');
@@ -2627,40 +2588,8 @@ function buildDay() {
   const tl = document.getElementById('day-tl');
   if (!tl) return;
   tl.innerHTML = '';
-  const now = new Date();
-  const todayStr = now.toDateString();
-  // タスクセッションをhour→イベント配列にマッピング
-  const evMap = {};
-  for (const task of tasks) {
-    if (!task.sessions) continue;
-    for (const s of task.sessions) {
-      if (!s.start) continue;
-      const d = new Date(s.start);
-      if (d.toDateString() !== todayStr) continue;
-      const h = d.getHours();
-      if (!evMap[h]) evMap[h] = [];
-      const endD = s.end ? new Date(s.end) : (task.id === currentRunningId ? now : null);
-      const sStr = d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
-      const eStr = endD ? endD.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : '…';
-      const running = !s.end && task.id === currentRunningId;
-      evMap[h].push({ name: task.title, sStr, eStr, running, status: task.status });
-    }
-  }
-  for (let h = 8; h <= 22; h++) {
-    const row = document.createElement('div');
-    const isNow = h === now.getHours();
-    row.className = 'tl-row' + (isNow ? ' tl-now' : '');
-    const evList = evMap[h] || [];
-    const evHtml = evList.map(ev => {
-      const bg = ev.running ? 'var(--am3)' : ev.status === 'done' ? 'rgba(62,168,106,0.15)' : 'rgba(78,126,200,0.18)';
-      const tc = ev.running ? 'var(--am)' : ev.status === 'done' ? 'var(--gr)' : 'var(--bl)';
-      return '<div class="tl-e" style="background:' + bg + ';color:' + tc + '">'
-        + (ev.running ? '▶ ' : '') + ev.name + ' · ' + ev.sStr + '–' + ev.eStr + '</div>';
-    }).join('');
-    row.innerHTML = '<div class="tl-t" style="' + (isNow ? 'color:var(--am)' : '') + '">' + h + ':00</div>'
-      + '<div class="tl-s">' + evHtml + '</div>';
-    tl.appendChild(row);
-  }
+  const evs = {9:{n:'音声フロー',bg:'rgba(78,126,200,0.18)',tc:'var(--bl)'},11:{n:'英語学習',bg:'rgba(62,168,106,0.15)',tc:'var(--gr)'},14:{n:'UIモックアップ',bg:'var(--am3)',tc:'var(--am)'},17:{n:'コードレビュー',bg:'rgba(212,78,78,0.15)',tc:'var(--rd)'}};
+  for (let h=8;h<=20;h++) { const row=document.createElement('div'); row.className='tl-row'+(h===14?' tl-now':''); const ev=evs[h]; row.innerHTML=`<div class="tl-t" style="${h===14?'color:var(--am)':''}">${h}:00</div><div class="tl-s">${ev?`<div class="tl-e" style="background:${ev.bg};color:${ev.tc}">${h===14?'&gt; ':''}${ev.n}</div>`:''}</div>`; tl.appendChild(row); }
 }
 
 /* VOICE */
@@ -2768,7 +2697,6 @@ function startTaskById(id) {
   taskTimerInterval = setInterval(tickTimer, 1000);
   syncHomeWithTasks();
   renderTasks();
-  buildDay();
   toast(task.title + ' 開始');
 }
 
@@ -2787,7 +2715,6 @@ function pauseTaskById(id) {
   syncHomeWithTasks();
   renderTasks();
   renderSessionLog();
-  buildDay();
   toast('中断 — 再開すると続きから記録します');
 }
 
@@ -2809,17 +2736,14 @@ function completeTaskById(id) {
   renderTasks();
   renderSessionLog();
   updateKpiCounts();
-  buildDay();
   toast('完了 — ' + elapsed + 'min 記録しました');
 }
 
 function tickTimer() {
   if (!taskStartTime || !currentRunningId) return;
-  const task = tasks.find(t => t.id === currentRunningId);
-  const totalMs  = task ? calcTotalTime(task) : (new Date() - taskStartTime);
-  const totalSec = Math.floor(totalMs / 1000);
-  const m = String(Math.floor(totalSec / 60)).padStart(2, '0');
-  const s = String(totalSec % 60).padStart(2, '0');
+  const elapsed = Math.floor((new Date() - taskStartTime) / 1000);
+  const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+  const s = String(elapsed % 60).padStart(2, '0');
   const startStr = taskStartTime.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
   const kpiEl  = document.getElementById('task-running-time');
   const cardEl = document.getElementById('card-timer-' + currentRunningId);
@@ -2855,76 +2779,6 @@ function deleteTask(id) {
   renderTasks();
   renderSessionLog();
   updateKpiCounts();
-}
-
-/* ── TIME HELPERS ── */
-function fmtHHMM(iso) {
-  return new Date(iso).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
-}
-function fmtDur(ms) {
-  if (ms <= 0) return '0m';
-  const m = Math.floor(ms / 60000);
-  if (m < 60) return m + 'm';
-  const h = Math.floor(m / 60), rm = m % 60;
-  return rm > 0 ? h + 'h ' + rm + 'm' : h + 'h';
-}
-function calcTotalTime(task) {
-  if (!task.sessions || !task.sessions.length) return 0;
-  let total = 0;
-  for (const s of task.sessions) {
-    const start = new Date(s.start);
-    const end = s.end ? new Date(s.end) : (task.id === currentRunningId ? new Date() : null);
-    if (end) total += end - start;
-  }
-  return total;
-}
-function renderTimeLog(task) {
-  if (!task.sessions || !task.sessions.length) return '';
-  const isRunning = task.id === currentRunningId;
-  let html = '';
-  for (let i = 0; i < task.sessions.length; i++) {
-    const s = task.sessions[i];
-    const startStr = fmtHHMM(s.start);
-    const icon  = i === 0 ? '▶' : '↩';
-    const label = i === 0 ? '開始' : '再開';
-    const iconColor = 'var(--gr)';
-    if (s.end) {
-      const endStr = fmtHHMM(s.end);
-      const dur = fmtDur(new Date(s.end) - new Date(s.start));
-      const isLast = i === task.sessions.length - 1;
-      const isDone = task.status === 'done' && isLast;
-      const endIcon  = isDone ? '✓' : '⏸';
-      const endLabel = isDone ? '完了' : '中断';
-      const endColor = isDone ? 'var(--gr)' : 'var(--am)';
-      html += '<div class="ttl-line">'
-        + '<span style="color:' + iconColor + '">' + icon + '</span>'
-        + '<span>' + label + ' ' + startStr + '</span>'
-        + '<span class="ttl-arrow">→</span>'
-        + '<span style="color:' + endColor + '">' + endIcon + '</span>'
-        + '<span>' + endLabel + ' ' + endStr + '</span>'
-        + '<span class="ttl-dur">+' + dur + '</span>'
-        + '</div>';
-    } else if (isRunning) {
-      html += '<div class="ttl-line">'
-        + '<span style="color:' + iconColor + '">' + icon + '</span>'
-        + '<span>' + label + ' ' + startStr + '</span>'
-        + '<span class="ttl-arrow">→</span>'
-        + '<span style="color:var(--am)">⏱</span>'
-        + '<span id="card-timer-' + task.id + '" class="task-timer" style="font-size:9px">00:00</span>'
-        + '</div>';
-    } else {
-      html += '<div class="ttl-line">'
-        + '<span style="color:' + iconColor + '">' + icon + '</span>'
-        + '<span>' + label + ' ' + startStr + '</span>'
-        + '</div>';
-    }
-  }
-  const totalMs  = calcTotalTime(task);
-  const totalStr = totalMs >= 60000 ? fmtDur(totalMs) : '';
-  if (totalStr && task.sessions.length >= 1) {
-    html += '<div class="ttl-total"><span>⏳</span><span>合計 ' + totalStr + '</span></div>';
-  }
-  return '<div class="task-timelog">' + html + '</div>';
 }
 
 function renderTasks() {
@@ -2976,8 +2830,8 @@ function renderCard(task) {
     <div class="task-meta">
       ${task.priority !== 'none' ? `<span class="task-badge ${priCls}">${task.priority.toUpperCase()}</span>` : ''}
       ${task.category ? `<span class="task-badge task-cat">${task.category}</span>` : ''}
+      ${isRunning ? '<span class="task-timer" id="card-timer-' + task.id + '">00:00</span>' : ''}
     </div>
-    ${renderTimeLog(task)}
     <div class="task-actions">${getTaskActions(task)}</div>
   </div>`;
 }
@@ -3221,37 +3075,6 @@ function generateWeeklyReview() {
   }, 1200);
 }
 
-/* ── LANGUAGE TOGGLE ── */
-function t(en, ja) {
-  return `<span class="en">${en}</span><span class="ja">${ja}</span>`;
-}
-function isJaLang() {
-  return document.body.classList.contains('lang-ja');
-}
-function updatePlaceholders() {
-  const ja = isJaLang();
-  const m = {
-    'tf-search': [ja, 'タスクを検索…', 'Search tasks…'],
-    'log-note':  [ja, '任意のメモ…',  'Optional note…'],
-  };
-  Object.entries(m).forEach(([id, [flag, j, e]]) => {
-    const el = document.getElementById(id);
-    if (el) el.placeholder = flag ? j : e;
-  });
-  document.querySelectorAll('.note-quick-input').forEach(el => {
-    el.placeholder = ja ? 'メモを入力… Enter で保存' : 'Write a note… Enter to save';
-  });
-}
-function toggleLang() {
-  const isJa = document.body.classList.toggle('lang-ja');
-  const lb = document.getElementById('lang-btn');
-  if (lb) lb.textContent = isJa ? 'EN' : 'JP';
-  localStorage.setItem('health-lang', isJa ? 'ja' : 'en');
-  toast(isJa ? '日本語モードに切り替えました' : 'Switched to English');
-  updatePlaceholders();
-  if (typeof renderRoutine === 'function') renderRoutine();
-}
-
 /* TOAST */
 function toast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),2200); }
 
@@ -3271,24 +3094,7 @@ updateKpiCounts();
 checkHabitReset();
 loadHabits();
 setInterval(checkHabitReset, 60000);
-
-// Auto-navigate to section from URL hash (e.g. #health from health.html Full View)
-if (location.hash) {
-  const target = location.hash.slice(1);
-  const btn = [...document.querySelectorAll('.sb-i')].find(b => b.getAttribute('onclick')?.includes(`'${target}'`));
-  if (btn) go(btn, target);
-}
 if ('Notification' in window) Notification.requestPermission();
-
-// Restore language preference
-(function() {
-  if (localStorage.getItem('health-lang') === 'ja') {
-    document.body.classList.add('lang-ja');
-    const lb = document.getElementById('lang-btn');
-    if (lb) lb.textContent = 'EN';
-  }
-})();
-
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
 </script>
