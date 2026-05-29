@@ -5543,21 +5543,20 @@ function lgHide() {
   if (gate) gate.style.display = 'none';
 }
 
-async function afterLogin() {
+async function afterLogin(showToast = true) {
   sRefreshAccountStatus();
-  // Check Oura connection in D1
   try {
     const res = await fetch(`${WORKER_BASE}/api/integrations`, { headers: posAuthHeader() });
     if (res.ok) {
       const { integrations } = await res.json();
       if (integrations.find(i => i.service === 'oura' && i.connected)) {
+        localStorage.setItem('pos-fully-setup', '1');
         lgHide();
-        toast('ログインしました');
+        if (showToast) toast('ログインしました');
         return;
       }
     }
   } catch {}
-  // Oura not connected → step 2
   lgShowStep('oura');
 }
 
@@ -5574,13 +5573,16 @@ async function lgConnectOura() {
     lgShowStep('oura', `保存失敗 (${res?.status ?? 'network'}) — もう一度試してください`);
     return;
   }
+  localStorage.setItem('pos-fully-setup', '1');
   lgHide();
   toast('Oura 接続完了');
+  sRefreshAccountStatus();
 }
 
 function posLogout() {
   fetch(`${WORKER_BASE}/auth/logout`, { method: 'POST', headers: posAuthHeader() }).catch(() => {});
   localStorage.removeItem('pos-session');
+  localStorage.removeItem('pos-fully-setup');
   lgShowStep('google');
   toast('ログアウトしました');
   sRefreshAccountStatus();
@@ -5605,7 +5607,10 @@ async function ouraGet(endpoint, params = {}) {
 
   const r = await fetch(url.toString(), { headers });
   if (r.status === 401) {
-    if (session) localStorage.removeItem('pos-session');
+    if (session) {
+      localStorage.removeItem('pos-session');
+      localStorage.removeItem('pos-fully-setup');
+    }
     const e = new Error('INVALID_TOKEN'); e.code = 'INVALID_TOKEN'; throw e;
   }
   if (r.status === 403) {
@@ -9432,14 +9437,20 @@ if ('Notification' in window) Notification.requestPermission();
 
 // Auth gate: check session on startup
 (async () => {
-  if (posSession()) {
-    const user = await posCheckAuth();
-    if (user) {
-      await afterLogin();  // check Oura too
-      return;
-    }
+  const session = posSession();
+  if (!session) { lgShowStep('google'); return; }
+
+  if (localStorage.getItem('pos-fully-setup') === '1') {
+    // Already set up — go straight to app, no network check
+    lgHide();
+    sRefreshAccountStatus();
+    return;
   }
-  lgShowStep('google');  // not logged in → show step 1
+
+  // Session exists but Oura not confirmed yet — verify and complete setup
+  const user = await posCheckAuth();
+  if (user) { await afterLogin(false); return; }
+  lgShowStep('google');
 })();
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
