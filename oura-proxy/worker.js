@@ -62,6 +62,11 @@ export default {
         if (request.method === 'DELETE') return handleDeleteIntegration(env, session, 'oura');
       }
 
+      if (path === '/api/calendar/list') {
+        if (!session) return json({ error: 'unauthenticated' }, 401);
+        return handleListCalendars(request, env, session);
+      }
+
       if (path === '/api/calendar/tasks-calendar') {
         if (!session) return json({ error: 'unauthenticated' }, 401);
         return handleTasksCalendar(request, env, session);
@@ -366,13 +371,62 @@ async function gcalAccessToken(env, userId) {
     }),
   });
   const data = await res.json();
-  if (!data.access_token) return row.token;
+  if (!data.access_token) {
+    // invalid_grant = the refresh token was revoked → signal "not connected"
+    // so the frontend shows the re-login banner instead of silently failing.
+    if (data.error === 'invalid_grant') return null;
+    return row.token; // transient failure: fall back to the (possibly stale) token
+  }
 
   const newExp = now + (data.expires_in || 3600);
   await env.DB.prepare(
     'UPDATE integrations SET token = ?, expires_at = ?, updated_at = ? WHERE user_id = ? AND service = ?'
   ).bind(data.access_token, newExp, now, userId, 'gcal').run();
   return data.access_token;
+}
+
+// In-memory calendarList cache (per isolate) — avoids hitting the calendarList
+// endpoint on every events poll. { userId → { ts, calendars } }
+const _calListCache = new Map();
+const CAL_LIST_TTL = 5 * 60 * 1000;
+
+async function fetchCalendarList(accessToken, userId) {
+  const cached = _calListCache.get(userId);
+  if (cached && Date.now() - cached.ts < CAL_LIST_TTL) return cached;
+
+  const res = await fetch(
+    'https://www.googleapis.com/calendar/v3/users/me/calendarList',
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  let calendars = [{ id: 'primary', summary: 'Primary', editable: true, primary: true }];
+  let error = null;
+  if (res.ok) {
+    const list = await res.json();
+    const items = (list.items || []).filter(c => c.accessRole !== 'freeBusyReader');
+    if (items.length > 0) {
+      calendars = items.map(c => ({
+        id: c.id,
+        summary: c.summaryOverride || c.summary,
+        // owner / writer can edit events; reader cannot
+        editable: c.accessRole === 'owner' || c.accessRole === 'writer',
+        primary: !!c.primary,
+        backgroundColor: c.backgroundColor || null,
+      }));
+    }
+  } else {
+    error = `calendarList ${res.status}`;
+  }
+  const result = { ts: Date.now(), calendars, error };
+  if (!error) _calListCache.set(userId, result);
+  return result;
+}
+
+// GET /api/calendar/list → calendars the user can see (for the create-event picker)
+async function handleListCalendars(request, env, session) {
+  const accessToken = await gcalAccessToken(env, session.user.id);
+  if (!accessToken) return json({ connected: false, calendars: [] });
+  const { calendars, error } = await fetchCalendarList(accessToken, session.user.id);
+  return json({ connected: true, calendars, ...(error ? { error } : {}) });
 }
 
 async function handleGetCalendarEvents(request, env, session) {
@@ -388,26 +442,7 @@ async function handleGetCalendarEvents(request, env, session) {
     timeMin, timeMax, singleEvents: 'true', orderBy: 'startTime', maxResults: '500',
   });
 
-  // Get all calendars the user has
-  const calListRes = await fetch(
-    'https://www.googleapis.com/calendar/v3/users/me/calendarList',
-    { headers: { Authorization: `Bearer ${accessToken}` } }
-  );
-  let calendars = [{ id: 'primary', editable: true }];
-  let calListError = null;
-  if (calListRes.ok) {
-    const calList = await calListRes.json();
-    const items = (calList.items || []).filter(c => c.accessRole !== 'freeBusyReader');
-    if (items.length > 0) {
-      calendars = items.map(c => ({
-        id: c.id,
-        // owner / writer can edit events; reader cannot
-        editable: c.accessRole === 'owner' || c.accessRole === 'writer',
-      }));
-    }
-  } else {
-    calListError = `calendarList ${calListRes.status}`;
-  }
+  const { calendars, error: calListError } = await fetchCalendarList(accessToken, session.user.id);
 
   // Fetch events from all calendars in parallel
   const results = await Promise.all(calendars.map(async cal => {
@@ -428,7 +463,9 @@ async function handleGetCalendarEvents(request, env, session) {
     return ta.localeCompare(tb);
   });
 
-  return json({ connected: true, events, _debug: { calendars, calListError } });
+  // _debug only when explicitly requested (?debug=1) — keep production responses lean
+  const debug = url.searchParams.get('debug') === '1';
+  return json({ connected: true, events, ...(debug ? { _debug: { calendars, calListError } } : {}) });
 }
 
 // Get-or-create the dedicated "Personal OS Tasks" calendar; returns its id.
@@ -488,9 +525,11 @@ async function handleCreateCalendarEvent(request, env, session) {
   const accessToken = await gcalAccessToken(env, session.user.id);
   if (!accessToken) return json({ error: 'gcal_not_connected' }, 403);
 
+  // Honour ?calendarId= (task sessions go to the dedicated "Personal OS Tasks" calendar)
+  const calId = new URL(request.url).searchParams.get('calendarId') || 'primary';
   const body = await request.json();
   const gcalRes = await fetch(
-    'https://www.googleapis.com/calendar/v3/calendars/primary/events',
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events`,
     {
       method: 'POST',
       headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },

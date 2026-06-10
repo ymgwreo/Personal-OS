@@ -931,7 +931,7 @@ function go(btn, name) {
   document.getElementById('ttl').textContent = pageCfg[name].title;
   const pp = document.getElementById('tp-pills');
   pp.innerHTML = pageCfg[name].pills.map((p,i) => `<div class="tp${i===0?' on':''}" onclick="selP(this)">${p}</div>`).join('');
-  if (name === 'calendar') calRender();
+  if (name === 'calendar') { calRender(); startCalendarPolling(); } else { stopCalendarPolling(); }
   if (name === 'health') { initHealth(); }
   if (name === 'analytics') { showAnalyticsTab('Weekly'); buildSp('recovery-sp',[65,70,78,68,82,74,82],'var(--gr)'); }
   if (name === 'journal') { renderJournal(); renderNotes(); }
@@ -1163,9 +1163,23 @@ let calView = 'week';
 const CAL_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const CAL_DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-const SLEEP_SCORES = {
-  '2026-5': [72,68,80,84,76,82,85,74,70,78,82,86,80,75,71,73,79,84,88,82]
-};
+// Real Oura sleep scores for the month view — { 'YYYY-MM-DD' → score }
+let _calSleepScores = {};
+let _calSleepFetchKey = null;
+async function _calLoadSleepScores(yr, mo) {
+  const key = `${yr}-${mo + 1}`;
+  if (_calSleepFetchKey === key) return; // already loaded / in flight
+  _calSleepFetchKey = key;
+  try {
+    const start = `${yr}-${String(mo + 1).padStart(2, '0')}-01`;
+    const endD  = new Date(yr, mo + 1, 0);
+    const end   = `${yr}-${String(mo + 1).padStart(2, '0')}-${String(endD.getDate()).padStart(2, '0')}`;
+    const res = await ouraGet('daily_sleep', { start_date: start, end_date: end });
+    _calSleepScores = {};
+    (res.data || []).forEach(d => { if (d.day && d.score != null) _calSleepScores[d.day] = d.score; });
+    if (calView === 'month') buildMonth();  // re-render with scores
+  } catch { /* no Oura token / network — month view just omits sleep chips */ }
+}
 
 const GCAL_SLOT_H = 44;
 const GCAL_START_H = 0;
@@ -1223,6 +1237,47 @@ function calRender(preserveScroll = false) {
   if (calView === 'month') buildMonth();
   else if (calView === 'week') _calBuildWeek(preserveScroll);
   else if (calView === 'day') buildDay(preserveScroll);
+  else if (calView === 'gantt') buildGantt();
+}
+
+// ── GANTT: real task sessions across the visible week ──────────────────
+function buildGantt() {
+  const wrap = document.querySelector('#cv-gantt .gantt-wrap');
+  if (!wrap) return;
+  const ws = _calWeekStart(calDate);
+  const weekMs = 7 * 86400000;
+  const wsT = ws.getTime();
+  const dayNames = Array.from({length:7}, (_, i) => {
+    const d = new Date(wsT + i * 86400000);
+    return CAL_DAYS_SHORT[d.getDay()].slice(0,3) + ' ' + d.getDate();
+  });
+
+  const statusLbl = { todo: 'Todo', inprogress: 'Running', done: 'Done' };
+  const rows = [];
+  (tasks || []).forEach(t => {
+    const ss = (t.sessions || []).filter(s => s.start);
+    if (!ss.length) return;
+    let min = Infinity, max = -Infinity;
+    ss.forEach(s => {
+      const st = new Date(s.start).getTime();
+      const en = s.end ? new Date(s.end).getTime() : (t.id === currentRunningId ? Date.now() : st + 3600000);
+      if (en > wsT && st < wsT + weekMs) { min = Math.min(min, st); max = Math.max(max, en); }
+    });
+    if (min === Infinity) return;
+    const left  = Math.max(0, (min - wsT) / weekMs * 100);
+    const right = Math.min(100, (max - wsT) / weekMs * 100);
+    const hex = taskColor(t);
+    rows.push(`<div class="gantt-row"><div class="gantt-lbl" title="${_escHtml(t.title)}">${_escHtml(t.title)}</div>
+      <div class="gantt-track"><div class="gantt-bar" style="left:${left.toFixed(1)}%;width:${Math.max(right - left, 2).toFixed(1)}%;background:${hex}33;color:${hex}">${statusLbl[t.status] || ''}</div></div></div>`);
+  });
+
+  wrap.innerHTML = `
+    <div style="display:flex;margin-bottom:5px;padding-left:118px">
+      <div style="flex:1;display:flex;justify-content:space-between;font-size:11px;color:var(--t3);font-family:var(--fm);min-width:200px">
+        ${dayNames.map(n => `<span>${n}</span>`).join('')}
+      </div>
+    </div>
+    ${rows.length ? rows.join('') : '<div style="font-size:12px;color:var(--t3);padding:20px;text-align:center">この週に作業セッションのあるタスクはありません</div>'}`;
 }
 
 // Re-render the active calendar view without jumping scroll or disrupting interaction.
@@ -1240,16 +1295,32 @@ function calSoftRefresh(bustCache) {
 
 // Realtime polling: while the calendar is open, refetch Google events periodically
 // so external edits (other devices / the Google app) appear without a manual refresh.
+// 30s keeps the worker/API load light; tab-focus refresh covers the "I just edited
+// it on my phone" case instantly.
 let _calPollTimer = null;
 function startCalendarPolling() {
   if (_calPollTimer) return;
-  _calPollTimer = setInterval(() => calSoftRefresh(true), 8000); // every 8s
+  _calPollTimer = setInterval(() => {
+    if (document.hidden) return;                 // background tab → skip
+    calSoftRefresh(true);
+  }, 30000);
+}
+function stopCalendarPolling() {
+  clearInterval(_calPollTimer);
+  _calPollTimer = null;
 }
 // Also refresh immediately when the tab/window regains focus
 document.addEventListener('visibilitychange', () => { if (!document.hidden) calSoftRefresh(true); });
 window.addEventListener('focus', () => calSoftRefresh(true));
 
 function _calUpdateTitle() {
+  // Month-view day-of-week header follows the week-start setting
+  const dowRow = document.querySelector('.gcal-month-dow');
+  if (dowRow) {
+    const names = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const ws0 = _calWeekStartDow();
+    dowRow.innerHTML = Array.from({length:7}, (_, i) => `<span>${names[(ws0 + i) % 7]}</span>`).join('');
+  }
   const ttl = document.getElementById('cal-ttl');
   if (!ttl) return;
   if (calView === 'month') {
@@ -1265,8 +1336,49 @@ function _calUpdateTitle() {
   }
 }
 
+// Week-start setting: 'sun' (default) or 'mon' — persisted in localStorage
+function _calWeekStartDow() { return localStorage.getItem('cal-week-start') === 'mon' ? 1 : 0; }
+// Index of a JS getDay() within the configured week (0 = first column)
+function _calDowIndex(jsDay) { return (jsDay - _calWeekStartDow() + 7) % 7; }
+
+function calToggleWeekStart() {
+  localStorage.setItem('cal-week-start', _calWeekStartDow() === 0 ? 'mon' : 'sun');
+  calRender();
+}
+
 function _calWeekStart(d) {
-  const dt = new Date(d); dt.setDate(dt.getDate() - dt.getDay()); dt.setHours(0,0,0,0); return dt;
+  const dt = new Date(d); dt.setDate(dt.getDate() - _calDowIndex(dt.getDay())); dt.setHours(0,0,0,0); return dt;
+}
+
+// ── All-day strip (week / day views) ────────────────────────────────────
+// Renders chips for date-only events into a row directly under the header.
+function _calBuildAllDayRow(hdrEl, days, events) {
+  let row = hdrEl.nextElementSibling;
+  if (!row || !row.classList.contains('gcal-allday-row')) {
+    row = document.createElement('div');
+    row.className = 'gcal-allday-row';
+    hdrEl.after(row);
+  }
+  const allDay = (events || []).filter(ev => ev.start?.date);
+  let html = '<div class="gcal-gutter gcal-allday-lbl">終日</div>';
+  let any = false;
+  days.forEach(d => {
+    const dayStart = new Date(d); dayStart.setHours(0,0,0,0);
+    const dayEnd = new Date(dayStart.getTime() + 86400000);
+    let chips = '';
+    allDay.forEach(ev => {
+      const s = new Date(ev.start.date + 'T00:00:00');
+      let e = ev.end?.date ? new Date(ev.end.date + 'T00:00:00') : new Date(s.getTime() + 86400000);
+      if (e <= s) e = new Date(s.getTime() + 86400000);
+      if (e <= dayStart || s >= dayEnd) return;
+      const clr = _gcalEventColor(ev.colorId);
+      chips += `<div class="gcal-allday-chip" title="${_escHtml(ev.summary || '')}" style="background:${clr.bg};color:${clr.c}">${_escHtml(ev.summary || '(無題)')}</div>`;
+      any = true;
+    });
+    html += `<div class="gcal-allday-col">${chips}</div>`;
+  });
+  row.innerHTML = html;
+  row.style.display = any ? 'flex' : 'none';
 }
 
 function _calBuildMini() {
@@ -1275,17 +1387,19 @@ function _calBuildMini() {
   const yr = calView === 'month' ? calYear : calDate.getFullYear();
   const mo = calView === 'month' ? calMonth : calDate.getMonth();
   const today = new Date();
-  const first = new Date(yr, mo, 1).getDay();
+  const first = _calDowIndex(new Date(yr, mo, 1).getDay());
   const days = new Date(yr, mo + 1, 0).getDate();
   const prev = new Date(yr, mo, 0).getDate();
+  const dowChars = ['S','M','T','W','T','F','S'];
+  const ws0 = _calWeekStartDow();
   let h = `<div class="gcal-mini-nav">
     <span class="gcal-mini-nav-ttl">${CAL_MONTHS[mo].slice(0,3)} ${yr}</span>
     <div style="display:flex;gap:2px">
-      <button class="gcal-mini-nav-btn" onclick="calPrev()">&#8249;</button>
-      <button class="gcal-mini-nav-btn" onclick="calNext()">&#8250;</button>
+      <button class="gcal-mini-nav-btn" onclick="calPrev()" aria-label="前へ">&#8249;</button>
+      <button class="gcal-mini-nav-btn" onclick="calNext()" aria-label="次へ">&#8250;</button>
     </div>
-  </div><div class="gcal-mini-grid">
-  <div class="gcal-mini-dow">S</div><div class="gcal-mini-dow">M</div><div class="gcal-mini-dow">T</div><div class="gcal-mini-dow">W</div><div class="gcal-mini-dow">T</div><div class="gcal-mini-dow">F</div><div class="gcal-mini-dow">S</div>`;
+  </div><div class="gcal-mini-grid">`;
+  for (let i = 0; i < 7; i++) h += `<div class="gcal-mini-dow">${dowChars[(ws0 + i) % 7]}</div>`;
   for (let i = 0; i < first; i++) h += `<div class="gcal-mini-day other">${prev - first + i + 1}</div>`;
   for (let d = 1; d <= days; d++) {
     const isToday = yr === today.getFullYear() && mo === today.getMonth() && d === today.getDate();
@@ -1295,6 +1409,7 @@ function _calBuildMini() {
   const trailing = (first + days) % 7;
   if (trailing > 0) for (let i = 1; i <= 7 - trailing; i++) h += `<div class="gcal-mini-day other">${i}</div>`;
   h += '</div>';
+  h += `<div class="gcal-mini-weekstart" onclick="calToggleWeekStart()" title="クリックで切替">週の開始: ${ws0 === 0 ? '日' : '月'}曜</div>`;
   mini.innerHTML = h;
 }
 
@@ -1302,38 +1417,79 @@ function calJump(yr, mo, d) {
   calDate = new Date(yr, mo, d); calYear = yr; calMonth = mo; calRender();
 }
 
-function buildMonth() {
+const _MONTH_MAX_EVENTS = 3;   // chips per cell before "+N"
+
+async function buildMonth() {
   const cells = document.getElementById('mc');
   if (!cells) return;
-  cells.innerHTML = '';
   const yr = calYear, mo = calMonth;
   const today = new Date();
   const isCurrent = yr === today.getFullYear() && mo === today.getMonth();
-  const first = new Date(yr, mo, 1).getDay();
+  const first = _calDowIndex(new Date(yr, mo, 1).getDay());
   const days = new Date(yr, mo + 1, 0).getDate();
   const prev = new Date(yr, mo, 0).getDate();
-  const scores = SLEEP_SCORES[`${yr}-${mo+1}`] || [];
 
+  _calLoadSleepScores(yr, mo);                                      // async; re-renders when done
+  const monthStart = new Date(yr, mo, 1);
+  const monthEnd   = new Date(yr, mo + 1, 1);
+  const { events } = await _fetchGcalEvents(monthStart, monthEnd);
+  if (calView !== 'month' || calYear !== yr || calMonth !== mo) return; // user navigated away during fetch
+
+  // Bucket events per local day key 'YYYY-MM-DD'
+  const byDay = {};
+  const push = (key, html) => { (byDay[key] = byDay[key] || []).push(html); };
+  (events || []).forEach(ev => {
+    if (ev.extendedProperties?.private?.posTaskId) return;          // tasks rendered from local sessions
+    const title = _escHtml(ev.summary || '(無題)');
+    if (ev.start?.date) {                                           // all-day: start.date inclusive → end.date exclusive
+      const clr = _gcalEventColor(ev.colorId);
+      const start = new Date(ev.start.date + 'T00:00:00');
+      let end = ev.end?.date ? new Date(ev.end.date + 'T00:00:00') : new Date(start.getTime() + 86400000);
+      if (end <= start) end = new Date(start.getTime() + 86400000);
+      for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+        push(_localIso(d), `<div class="gcal-mev" style="background:${clr.bg};color:${clr.c}">${title}</div>`);
+      }
+    } else if (ev.start?.dateTime) {
+      const sd = new Date(ev.start.dateTime);
+      const clr = _gcalEventColor(ev.colorId);
+      const t = sd.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+      push(_localIso(sd), `<div class="gcal-mev" style="background:${clr.bg}22;color:${clr.bg};border-left:2px solid ${clr.bg}">${t} ${title}</div>`);
+    }
+  });
+  // Task sessions
+  (tasks || []).forEach(t => {
+    (t.sessions || []).forEach(s => {
+      if (!s.start) return;
+      const sd = new Date(s.start);
+      if (sd.getFullYear() !== yr || sd.getMonth() !== mo) return;
+      const hex = taskColor(t);
+      push(_localIso(sd), `<div class="gcal-mev" style="background:${hex}1f;color:${hex}">${_escHtml(t.title)}</div>`);
+    });
+  });
+
+  cells.innerHTML = '';
   for (let i = 0; i < first; i++) {
     const el = document.createElement('div'); el.className = 'gcal-md other';
     el.innerHTML = `<div class="gcal-mdn">${prev - first + i + 1}</div>`; cells.appendChild(el);
   }
   for (let d = 1; d <= days; d++) {
     const isToday = isCurrent && d === today.getDate();
-    const score = scores[d - 1];
+    const dayKey = `${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const el = document.createElement('div'); el.className = 'gcal-md';
-    el.innerHTML = `<div class="gcal-mdn${isToday ? ' today' : ''}">${d}</div>`;
-    if (score) {
+    let html = `<div class="gcal-mdn${isToday ? ' today' : ''}">${d}</div>`;
+    const score = _calSleepScores[dayKey];
+    if (score != null) {
       const c = score>=85?'var(--gr)':score>=75?'var(--bl)':score>=65?'var(--am)':'var(--rd)';
       const bg = score>=85?'rgba(62,168,106,0.14)':score>=75?'rgba(78,126,200,0.14)':score>=65?'rgba(196,154,30,0.14)':'rgba(212,78,78,0.14)';
-      el.innerHTML += `<div class="gcal-mev" style="background:${bg};color:${c}">Sleep ${score}</div>`;
+      html += `<div class="gcal-mev" style="background:${bg};color:${c}">Sleep ${score}</div>`;
     }
-    const dStr = new Date(yr, mo, d).toDateString();
-    (tasks || []).filter(t => t.sessions && t.sessions.some(s => s.start && new Date(s.start).toDateString() === dStr))
-      .slice(0, 2).forEach(t => {
-        el.innerHTML += `<div class="gcal-mev" style="background:rgba(78,126,200,0.12);color:var(--bl)">${t.title}</div>`;
-      });
-    el.onclick = () => { calDate = new Date(yr, mo, d); calJump(yr, mo, d); calV(document.querySelector('.gcal-vb[onclick*="day"]'), 'day'); };
+    const dayEvents = byDay[dayKey] || [];
+    html += dayEvents.slice(0, _MONTH_MAX_EVENTS).join('');
+    if (dayEvents.length > _MONTH_MAX_EVENTS) {
+      html += `<div class="gcal-mev gcal-mev-more">+${dayEvents.length - _MONTH_MAX_EVENTS}件</div>`;
+    }
+    el.innerHTML = html;
+    el.onclick = () => { calDate = new Date(yr, mo, d); calJump(yr, mo, d); calV(document.getElementById('gcal-vb-day'), 'day'); };
     cells.appendChild(el);
   }
   const trailing = (first + days) % 7;
@@ -1344,6 +1500,7 @@ function buildMonth() {
 }
 
 let _gcalEvCache = {};     // key → { ts, events, connected }
+let _gcalEvIndex = {};     // eventId → full event object (description, location, …)
 let _gcalConnected = null; // true/false/null (unknown)
 
 function _localIso(d) {
@@ -1365,6 +1522,7 @@ async function _fetchGcalEvents(startDate, endDate) {
     const data = await res.json();
     // Overlay local pending edits/deletes so a just-moved event never snaps back.
     const events = _applyPendingOverlay(data.events || []);
+    events.forEach(ev => { _gcalEvIndex[ev.id] = ev; });   // full-event lookup for the detail popover
     const result = { ts: Date.now(), connected: data.connected !== false, events };
     _gcalEvCache[key] = result;
     _gcalConnected = result.connected;
@@ -1391,6 +1549,11 @@ function _reconcileTaskEventsFromGcal(events) {
     if (match.session.start !== newStart || match.session.end !== newEnd) {
       match.session.start = newStart;
       if (match.session.end) match.session.end = newEnd;
+      changed = true;
+    }
+    // External rename of the event → rename the task (bidirectional title sync)
+    if (ev.summary && ev.summary !== match.task.title) {
+      match.task.title = ev.summary;
       changed = true;
     }
   }
@@ -1434,9 +1597,10 @@ function _calBuildTimeGrid(gutterEl, gridEl, days, gcalEvents = [], preserveScro
 
   // Gutter: time labels (skip midnight label at top)
   let gutterHtml = `<div style="height:${totalH}px;position:relative">`;
+  const use24h = typeof isJaLang === 'function' && isJaLang();   // JP → 24h labels (matches event times)
   for (let h = 1; h < GCAL_END_H; h++) {
     const top = h * GCAL_SLOT_H;
-    const lbl = h < 12 ? h + ' AM' : h === 12 ? '12 PM' : (h - 12) + ' PM';
+    const lbl = use24h ? `${h}:00` : (h < 12 ? h + ' AM' : h === 12 ? '12 PM' : (h - 12) + ' PM');
     gutterHtml += `<div class="gcal-hr-lbl" style="top:${top}px">${lbl}</div>`;
   }
   gutterHtml += '</div>';
@@ -1446,7 +1610,6 @@ function _calBuildTimeGrid(gutterEl, gridEl, days, gcalEvents = [], preserveScro
   let gridHtml = '';
   days.forEach(d => {
     const isToday = d.toDateString() === today.toDateString();
-    const dTaskStr = d.toDateString();
     // Use LOCAL date string to avoid UTC offset issues (e.g. JST = UTC+9)
     const dIsoStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     gridHtml += `<div class="gcal-dc${isToday ? ' today-col' : ''}" data-date="${dIsoStr}" style="height:${totalH}px">`;
@@ -1460,27 +1623,34 @@ function _calBuildTimeGrid(gutterEl, gridEl, days, gcalEvents = [], preserveScro
     // ── Collect all events for this day (gcal + task) into one list ──────
     const items = [];
 
+    // Day window in real timestamps — robust across month boundaries
+    const dayStart = new Date(d); dayStart.setHours(0, 0, 0, 0);
+    const dayEnd   = new Date(dayStart.getTime() + 86400000);
+
     gcalEvents.forEach(ev => {
-      if (!ev.start?.dateTime) return;
+      if (!ev.start?.dateTime) return;  // all-day events render in the header strip
       // Task-linked events are rendered from local sessions below — skip to avoid dupes
       if (ev.extendedProperties?.private?.posTaskId) return;
       const sd = new Date(ev.start.dateTime);
-      const sdLocal = `${sd.getFullYear()}-${String(sd.getMonth()+1).padStart(2,'0')}-${String(sd.getDate()).padStart(2,'0')}`;
-      if (sdLocal !== dIsoStr) return;
       const ed = ev.end?.dateTime ? new Date(ev.end.dateTime) : new Date(sd.getTime() + 3600000);
-      const sMin = sd.getHours() * 60 + sd.getMinutes();
-      const eMin = Math.min(ed.getHours() * 60 + ed.getMinutes() + (ed.getDate() > sd.getDate() ? 1440 : 0), _DAY_MIN);
+      // Clip the event to this day's window (renders a segment on EVERY day it touches)
+      if (ed <= dayStart || sd >= dayEnd) return;
+      const sMin = Math.max(0, (sd - dayStart) / 60000);
+      const eMin = Math.min(_DAY_MIN, (ed - dayStart) / 60000);
+      if (eMin - sMin <= 0) return;
+      const continuation = sd < dayStart;            // started on a previous day
       const duration = ed.getTime() - sd.getTime();
       const clr      = _gcalEventColor(ev.colorId);
       const sStr     = sd.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
       const eStr2    = ed.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
-      const editable = ev._editable !== false;
+      // Continuation segments are read-only: dragging a clipped chunk would move the whole event ambiguously
+      const editable = ev._editable !== false && !continuation;
       items.push({
         s: sMin, e: Math.max(eMin, sMin + 20 / _PXPERMIN),
         cls: 'gcal-ev gcal-ev-google' + (editable ? '' : ' gcal-ev-readonly'),
         style: `background:${clr.bg};color:${clr.c};touch-action:none;cursor:${editable ? 'grab' : 'default'}`,
         attrs: `data-event-id="${_escHtml(ev.id)}" data-calendar-id="${_escHtml(ev._calendarId || 'primary')}" data-duration="${duration}" data-title="${_escHtml(ev.summary || '(No title)')}"`,
-        inner: `<div class="gcal-ev-title">${_escHtml(ev.summary || '(No title)')}</div><div class="gcal-ev-time">${sStr}–${eStr2}</div>${editable ? '<div class="gcal-ev-resize"></div>' : ''}`,
+        inner: `<div class="gcal-ev-title">${continuation ? '⤷ ' : ''}${_escHtml(ev.summary || '(No title)')}</div><div class="gcal-ev-time">${sStr}–${eStr2}</div>${editable ? '<div class="gcal-ev-resize"></div>' : ''}`,
       });
     });
 
@@ -1490,26 +1660,28 @@ function _calBuildTimeGrid(gutterEl, gridEl, days, gcalEvents = [], preserveScro
       task.sessions.forEach((s, sIdx) => {
         if (!s.start) return;
         const sd = new Date(s.start);
-        if (sd.toDateString() !== dTaskStr) return;
-        const sMin = sd.getHours() * 60 + sd.getMinutes();
-        if (sMin >= _DAY_MIN) return;
         const running = !s.end && task.id === currentRunningId;
         const endD  = s.end ? new Date(s.end) : (running ? today : new Date(sd.getTime() + 60 * 60000));
-        const eMin  = Math.min(endD.getHours() * 60 + endD.getMinutes(), _DAY_MIN);
+        // Clip to this day's window (sessions crossing midnight render on both days)
+        if (endD <= dayStart || sd >= dayEnd) return;
+        const sMin = Math.max(0, (sd - dayStart) / 60000);
+        const eMin = Math.min(_DAY_MIN, (endD - dayStart) / 60000);
+        if (eMin - sMin <= 0) return;
         const hex   = taskColor(task);
         const clr   = { bg: hex + '2e', c: hex, border: hex };
         colIdx++;
         const sStr = sd.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
         const eStr = endD.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
         const duration = (eMin - sMin) * 60000;
-        // Running session isn't draggable (its end is "now"); finished ones are.
-        const editable = !running;
+        const continuation = sd < dayStart;
+        // Running session isn't draggable (its end is "now"); clipped continuations neither.
+        const editable = !running && !continuation;
         items.push({
           s: sMin, e: Math.max(eMin, sMin + 20 / _PXPERMIN),
           cls: 'gcal-ev gcal-ev-task' + (editable ? '' : ' gcal-ev-readonly'),
           style: `background:${clr.bg};color:${clr.c};border-left:3px solid ${hex};touch-action:none;cursor:${editable ? 'grab' : 'default'}`,
           attrs: `data-task-id="${_escHtml(task.id)}" data-session-idx="${sIdx}" data-duration="${duration}" data-title="${_escHtml(task.title)}"`,
-          inner: `<div class="gcal-ev-title">${running ? '▶ ' : ''}${_escHtml(task.title)}</div><div class="gcal-ev-time">${sStr}–${eStr}</div>${editable ? '<div class="gcal-ev-resize"></div>' : ''}`,
+          inner: `<div class="gcal-ev-title">${running ? '▶ ' : continuation ? '⤷ ' : ''}${_escHtml(task.title)}</div><div class="gcal-ev-time">${sStr}–${eStr}</div>${editable ? '<div class="gcal-ev-resize"></div>' : ''}`,
         });
       });
     });
@@ -1677,6 +1849,20 @@ function _calPointerDown(e) {
   el.addEventListener('pointercancel', _calPointerUp);
 }
 
+// Esc during a drag → cancel and restore the original layout
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || !_dragState) return;
+  const st = _dragState;
+  _dragState = null;
+  st.el.removeEventListener('pointermove',   _calPointerMove);
+  st.el.removeEventListener('pointerup',     _calPointerUp);
+  st.el.removeEventListener('pointercancel', _calPointerUp);
+  try { st.el.releasePointerCapture(st.pointerId); } catch {}
+  _suppressColClick = true;
+  calRender(true);                       // full re-render = original position
+  gcalSnack('移動をキャンセルしました');
+});
+
 function _calBeginDragVisual(st) {
   st.dragging = true;
   const { el } = st;
@@ -1840,20 +2026,33 @@ async function _calPointerUp(e) {
       } : null;
       gcalSnack(`${st.title ? st.title + ' を' : '予定を'}${_fmtMin(newStartMin)}に${verb}`, undo);
     } else {
-      // Do NOT roll back the on-screen position — keep the user's move, just report.
+      // Google rejected the change (e.g. no permission) → roll back so the
+      // screen never lies about what's actually saved.
       const err = await res.json().catch(() => ({}));
+      _gcalRollbackMove(st.eventId, prev, prevPending);
       toast('カレンダー更新失敗: ' + (err.detail?.error?.message || err.error || res.status));
     }
   } catch {
-    toast('カレンダー更新に失敗（通信エラー）— 位置は保持します');
+    // Network error → also roll back (retrying silently could double-apply)
+    _gcalRollbackMove(st.eventId, prev, prevPending);
+    toast('カレンダー更新に失敗（通信エラー）— 元の位置に戻しました');
   }
 }
 
+// Revert a locally-applied move after the server rejected it.
+function _gcalRollbackMove(eventId, prev, prevPending) {
+  if (prev) _gcalCacheUpdateEvent(eventId, prev.start, prev.end);
+  if (prevPending) _gcalPendingEdits[eventId] = prevPending;
+  else delete _gcalPendingEdits[eventId];
+  calRender(true);
+}
+
 // ── Pending-edit overlay: keeps locally-moved events in place until Google catches up
-let _gcalPendingEdits   = {};   // eventId -> { startIso, endIso }
+const _PENDING_TTL_MS   = 60000; // safety valve: stop overriding Google after 60s
+let _gcalPendingEdits   = {};   // eventId -> { startIso, endIso, ts }
 let _gcalPendingDeletes = {};   // eventId -> ts (hidden until the fetch stops returning it)
 function _gcalSetPending(eventId, startIso, endIso) {
-  _gcalPendingEdits[eventId] = { startIso, endIso };
+  _gcalPendingEdits[eventId] = { startIso, endIso, ts: Date.now() };
 }
 // Overlay pending edits/deletes on a freshly fetched events array (mutates + filters).
 function _applyPendingOverlay(events) {
@@ -1861,6 +2060,7 @@ function _applyPendingOverlay(events) {
   for (const ev of events) {
     const pe = _gcalPendingEdits[ev.id];
     if (!pe) continue;
+    if (pe.ts && Date.now() - pe.ts > _PENDING_TTL_MS) { delete _gcalPendingEdits[ev.id]; continue; } // expired — trust Google
     const gStart = ev.start?.dateTime ? new Date(ev.start.dateTime).getTime() : null;
     if (gStart === new Date(pe.startIso).getTime()) { delete _gcalPendingEdits[ev.id]; continue; } // Google caught up
     if (ev.start) ev.start.dateTime = pe.startIso;
@@ -1984,6 +2184,28 @@ function gcalOpenDetail(el) {
   document.getElementById('gcd-when').textContent  =
     `${dateDisp} ${_fmtMin(startMin)} – ${_fmtMin(startMin + durMin)}`;
 
+  // Rich fields from the full event object (description / location / meet link)
+  const full = _gcalEvIndex[_detailCtx.eventId] || {};
+  const meta = document.getElementById('gcd-meta');
+  if (meta) {
+    let mh = '';
+    if (full.location) mh += `<div class="gcd-meta-row">📍 ${_escHtml(full.location)}</div>`;
+    const link = full.hangoutLink || full.conferenceData?.entryPoints?.find(p => p.entryPointType === 'video')?.uri;
+    if (link) mh += `<div class="gcd-meta-row">🎥 <a href="${_escHtml(link)}" target="_blank" rel="noopener" style="color:var(--bl)">会議に参加</a></div>`;
+    if (full.description) {
+      const txt = full.description.replace(/<[^>]*>/g, '').slice(0, 400);
+      mh += `<div class="gcd-meta-row gcd-desc">${_escHtml(txt)}</div>`;
+    }
+    if (full.attendees?.length) {
+      mh += `<div class="gcd-meta-row">👥 ${full.attendees.length}名: ${_escHtml(full.attendees.slice(0,3).map(a => a.displayName || a.email).join(', '))}${full.attendees.length > 3 ? ' …' : ''}</div>`;
+    }
+    if (full._calendarId && full._calendarId !== 'primary' && !full._calendarId.includes('@gmail.com')) {
+      mh += `<div class="gcd-meta-row" style="color:var(--t3)">📅 ${_escHtml(full._calendarId.split('@')[0].slice(0, 30))}</div>`;
+    }
+    meta.innerHTML = mh;
+    meta.style.display = mh ? 'block' : 'none';
+  }
+
   document.getElementById('gcd-view').style.display = 'block';
   document.getElementById('gcd-edit').style.display = 'none';
 
@@ -2085,13 +2307,21 @@ async function gcalDetailDelete() {
         _gcalCacheRestore(removed);
         calRender(true);
         const ev = removed[0].ev;
+        const origCal = ev._calendarId || calendarId || 'primary';
+        // Restore with full fidelity: original calendar, color, description, location…
+        const body = { summary: ev.summary, start: ev.start, end: ev.end };
+        if (ev.colorId)     body.colorId     = ev.colorId;
+        if (ev.description) body.description = ev.description;
+        if (ev.location)    body.location    = ev.location;
+        if (ev.recurrence)  body.recurrence  = ev.recurrence;
+        if (ev.extendedProperties) body.extendedProperties = ev.extendedProperties;
         try {
-          const r2 = await fetch(`${WORKER_BASE}/api/calendar/events`, {
+          const r2 = await fetch(`${WORKER_BASE}/api/calendar/events?calendarId=${encodeURIComponent(origCal)}`, {
             method: 'POST', headers: { ...posAuthHeader(), 'Content-Type': 'application/json' },
-            body: JSON.stringify({ summary: ev.summary, start: ev.start, end: ev.end }),
+            body: JSON.stringify(body),
           });
           const data = await r2.json().catch(() => ({}));
-          if (data.id) { removed.forEach(({ ev }) => { ev.id = data.id; ev._calendarId = 'primary'; }); calRender(); }
+          if (data.id) { removed.forEach(({ ev }) => { ev.id = data.id; ev._calendarId = origCal; }); _gcalEvIndex[data.id] = removed[0].ev; calRender(true); }
           gcalSnack('元に戻しました');
         } catch { toast('元に戻せませんでした'); }
       } : null;
@@ -2135,31 +2365,96 @@ function _calNewEventAt(col, e) {
   const pop = document.getElementById('gcal-create-pop');
   pop.style.display = 'block';
   pop.style.left = Math.min(e.clientX + 8, window.innerWidth - 260) + 'px';
-  pop.style.top  = Math.min(e.clientY,     window.innerHeight - 130) + 'px';
+  pop.style.top  = Math.min(e.clientY,     window.innerHeight - 210) + 'px';
+  const ad = document.getElementById('gcal-pop-allday'); if (ad) ad.checked = false;
+  const rp = document.getElementById('gcal-pop-repeat'); if (rp) rp.value = '';
+  _loadCalendarPicker();
   setTimeout(() => document.getElementById('gcal-pop-input').focus(), 40);
 }
 
 function gcalPopClose() { document.getElementById('gcal-create-pop').style.display = 'none'; _createEvData = null; }
 
+// Writable calendars for the create-popover picker (lazy, 5-min cache)
+let _gcalCalList = null, _gcalCalListTs = 0;
+async function _loadCalendarPicker() {
+  const sel = document.getElementById('gcal-pop-cal');
+  if (!sel) return;
+  if (!_gcalCalList || Date.now() - _gcalCalListTs > 5 * 60000) {
+    try {
+      const res = await fetch(`${WORKER_BASE}/api/calendar/list`, { headers: posAuthHeader() });
+      const data = await res.json();
+      _gcalCalList = (data.calendars || []).filter(c => c.editable);
+      _gcalCalListTs = Date.now();
+    } catch { _gcalCalList = []; }
+  }
+  const prevSel = sel.value;
+  sel.innerHTML = '<option value="primary">メイン</option>' +
+    _gcalCalList.filter(c => !c.primary)
+      .map(c => `<option value="${_escHtml(c.id)}">${_escHtml(c.summary || c.id)}</option>`).join('');
+  if (prevSel && [...sel.options].some(o => o.value === prevSel)) sel.value = prevSel;
+}
+
+// Insert a freshly created event into every cache entry covering its date (no refetch needed)
+function _gcalCacheInsert(ev) {
+  const iso = _localIso(new Date(ev.start?.dateTime || (ev.start?.date + 'T00:00:00')));
+  for (const key in _gcalEvCache) {
+    const [a, b] = key.split(':');
+    if (iso >= a && iso <= b) _gcalEvCache[key].events?.push(ev);
+  }
+  _gcalEvIndex[ev.id] = ev;
+}
+
 async function gcalPopSubmit() {
   const title = document.getElementById('gcal-pop-input').value.trim();
   if (!title || !_createEvData) return;
+  const calId  = document.getElementById('gcal-pop-cal')?.value || 'primary';
+  const allDay = document.getElementById('gcal-pop-allday')?.checked;
+  const repeat = document.getElementById('gcal-pop-repeat')?.value || '';
+  const { startDt, endDt } = _createEvData;
   gcalPopClose();
+
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const body = { summary: title };
+  if (allDay) {
+    const dayIso = _localIso(startDt);
+    const next   = new Date(startDt); next.setDate(next.getDate() + 1);
+    body.start = { date: dayIso };
+    body.end   = { date: _localIso(next) };
+  } else {
+    body.start = { dateTime: startDt.toISOString(), timeZone: tz };
+    body.end   = { dateTime: endDt.toISOString(),   timeZone: tz };
+  }
+  if (repeat) body.recurrence = [`RRULE:FREQ=${repeat}`];
+
   try {
-    const res = await fetch(`${WORKER_BASE}/api/calendar/events`, {
+    const res = await fetch(`${WORKER_BASE}/api/calendar/events?calendarId=${encodeURIComponent(calId)}`, {
       method:  'POST',
       headers: { ...posAuthHeader(), 'Content-Type': 'application/json' },
-      body:    JSON.stringify({
-        summary: title,
-        start: { dateTime: _createEvData.startDt.toISOString(), timeZone: tz },
-        end:   { dateTime: _createEvData.endDt.toISOString(),   timeZone: tz },
-      }),
+      body:    JSON.stringify(body),
     });
-    _gcalEvCache = {};
-    calRender();
-    toast(res.ok ? '予定を作成しました' : '作成に失敗しました');
-  } catch { toast('作成に失敗しました'); }
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.id) {
+      data._calendarId = calId; data._editable = true;
+      if (repeat) { _gcalEvCache = {}; }            // recurring → instances must come from Google
+      else _gcalCacheInsert(data);
+      calRender(true);
+      const undo = async () => {
+        _gcalCacheDelete(data.id);
+        _gcalPendingDeletes[data.id] = Date.now();
+        calRender(true);
+        try {
+          await fetch(`${WORKER_BASE}/api/calendar/events/${encodeURIComponent(data.id)}?calendarId=${encodeURIComponent(calId)}`, {
+            method: 'DELETE', headers: posAuthHeader(),
+          });
+          gcalSnack('作成を取り消しました');
+        } catch { toast('取り消しに失敗しました'); }
+      };
+      gcalSnack(`「${title}」を作成しました`, undo);
+    } else {
+      const reason = data.error?.message || data.detail?.error?.message || data.error || res.status;
+      toast('作成に失敗: ' + (typeof reason === 'object' ? JSON.stringify(reason) : reason));
+    }
+  } catch (e) { toast('作成に失敗（通信エラー）: ' + e.message); }
 }
 
 async function _calBuildWeek(preserveScroll = false) {
@@ -2183,6 +2478,7 @@ async function _calBuildWeek(preserveScroll = false) {
   });
   hdr.innerHTML = hdrHtml;
   const { events } = await _fetchGcalEvents(ws, we);
+  _calBuildAllDayRow(hdr, days, events);
   _calBuildTimeGrid(gutterEl, gridEl, days, events, preserveScroll);
 }
 
@@ -2202,6 +2498,7 @@ async function buildDay(preserveScroll = false) {
   const start = new Date(calDate); start.setHours(0,0,0,0);
   const end   = new Date(calDate); end.setDate(end.getDate() + 1);
   const { events } = await _fetchGcalEvents(start, end);
+  _calBuildAllDayRow(hdr, [calDate], events);
   _calBuildTimeGrid(gutterEl, gridEl, [calDate], events, preserveScroll);
 }
 
@@ -2442,6 +2739,13 @@ async function syncUpdateSession(task, sIdx) {
       method: 'PATCH', headers: { ...posAuthHeader(), 'Content-Type': 'application/json' },
       body: JSON.stringify(_sessionBody(task, session, sIdx)),
     });
+    if (res.status === 404 || res.status === 410) {
+      // The event was deleted on Google's side — forget the stale id and recreate.
+      delete _gcalPendingEdits[session.gcalEventId];
+      session.gcalEventId = null; session.gcalCalId = null;
+      Store.setTasks(tasks);
+      return syncCreateSession(task, sIdx);
+    }
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       const reason = data.detail ? (typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail)) : (data.error || res.status);
@@ -5547,7 +5851,7 @@ loadHwLayout();
 updateHwGridMetrics();
 initHwInteract();
 calRender();
-startCalendarPolling();
+// Calendar polling now starts/stops with screen navigation (see show())
 
 // Close gcal create popover on outside click
 document.addEventListener('click', e => {

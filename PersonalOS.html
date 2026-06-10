@@ -72,8 +72,22 @@
 <div id="gcal-create-pop" style="display:none;position:fixed;z-index:600;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:12px 14px;box-shadow:0 6px 24px rgba(0,0,0,0.14);width:248px;backdrop-filter:blur(12px)">
   <div style="font-size:11px;color:var(--t3);margin-bottom:7px;font-family:var(--fm)" id="gcal-pop-lbl"></div>
   <input id="gcal-pop-input" type="text" placeholder="タイトルを入力..."
-    style="width:100%;padding:7px 10px;border:1px solid var(--b2);border-radius:6px;font-size:12px;background:rgba(255,255,255,0.82);outline:none;box-sizing:border-box;margin-bottom:9px"
+    style="width:100%;padding:7px 10px;border:1px solid var(--b2);border-radius:6px;font-size:12px;background:rgba(255,255,255,0.82);outline:none;box-sizing:border-box;margin-bottom:8px"
     onkeydown="if(event.key==='Enter')gcalPopSubmit();if(event.key==='Escape')gcalPopClose()">
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+    <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--t2);cursor:pointer">
+      <input id="gcal-pop-allday" type="checkbox" style="accent-color:var(--am)">終日
+    </label>
+    <select id="gcal-pop-repeat" style="flex:1;padding:4px 6px;border:1px solid var(--b2);border-radius:5px;font-size:11px;background:rgba(255,255,255,0.82);color:var(--t2);outline:none">
+      <option value="">繰り返しなし</option>
+      <option value="DAILY">毎日</option>
+      <option value="WEEKLY">毎週</option>
+      <option value="MONTHLY">毎月</option>
+    </select>
+  </div>
+  <select id="gcal-pop-cal" style="width:100%;padding:5px 6px;border:1px solid var(--b2);border-radius:5px;font-size:11px;background:rgba(255,255,255,0.82);color:var(--t2);outline:none;margin-bottom:9px;box-sizing:border-box">
+    <option value="primary">メイン</option>
+  </select>
   <div style="display:flex;gap:6px;justify-content:flex-end">
     <button onclick="gcalPopClose()" style="height:26px;padding:0 10px;border-radius:5px;border:1px solid var(--b2);background:transparent;font-size:11px;cursor:pointer;color:var(--t2)">キャンセル</button>
     <button onclick="gcalPopSubmit()" style="height:26px;padding:0 12px;border-radius:5px;border:none;background:var(--am);color:#fff;font-size:11px;cursor:pointer;font-weight:500">作成</button>
@@ -92,6 +106,7 @@
     <div style="padding:2px 18px 18px">
       <div id="gcd-title" style="font-size:15px;font-weight:600;color:var(--t1);line-height:1.4;margin-bottom:8px;word-break:break-word"></div>
       <div id="gcd-when" style="font-size:12px;color:var(--t2);font-family:var(--fm)"></div>
+      <div id="gcd-meta" style="display:none;margin-top:10px;font-size:11px;color:var(--t2);line-height:1.6"></div>
     </div>
   </div>
   <!-- EDIT -->
@@ -561,10 +576,10 @@
             <span class="gcal-title-lbl" id="cal-ttl">June 2026</span>
           </div>
           <div class="gcal-view-grp">
-            <button class="gcal-vb" onclick="calV(this,'day')">Day</button>
-            <button class="gcal-vb on" onclick="calV(this,'week')">Week</button>
-            <button class="gcal-vb" onclick="calV(this,'month')">Month</button>
-            <button class="gcal-vb" onclick="calV(this,'gantt')">Gantt</button>
+            <button class="gcal-vb" id="gcal-vb-day" onclick="calV(this,'day')" aria-label="日表示">Day</button>
+            <button class="gcal-vb on" id="gcal-vb-week" onclick="calV(this,'week')" aria-label="週表示">Week</button>
+            <button class="gcal-vb" id="gcal-vb-month" onclick="calV(this,'month')" aria-label="月表示">Month</button>
+            <button class="gcal-vb" id="gcal-vb-gantt" onclick="calV(this,'gantt')" aria-label="ガント表示">Gantt</button>
           </div>
         </div>
 

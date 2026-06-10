@@ -749,6 +749,21 @@ body::after {
 .gcal-mdn:hover { background: rgba(255,255,255,0.6); }
 .gcal-mdn.today { background: var(--am); color: #fff; font-weight: 700; }
 .gcal-mev { font-size: 11px; padding: 1px 6px; border-radius: 3px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; font-weight: 500; }
+.gcal-mev-more { background: transparent !important; color: var(--t3) !important; font-size: 10px; font-weight: 600; }
+
+/* Mini-cal week-start toggle */
+.gcal-mini-weekstart { font-size: 10px; color: var(--t3); font-family: var(--fm); text-align: center; padding: 5px 0 2px; cursor: pointer; border-radius: 4px; }
+.gcal-mini-weekstart:hover { background: rgba(255,255,255,0.5); color: var(--t2); }
+
+/* Detail popover meta rows (location / meet link / description / attendees) */
+.gcd-meta-row { margin-bottom: 4px; word-break: break-word; }
+.gcd-desc { white-space: pre-wrap; max-height: 120px; overflow-y: auto; color: var(--t3); }
+
+/* All-day strip under the week/day header */
+.gcal-allday-row { display: flex; flex-shrink: 0; border-bottom: 1px solid var(--b2); background: rgba(200,205,212,0.18); }
+.gcal-allday-lbl { font-size: 9px; color: var(--t3); font-family: var(--fm); display: flex; align-items: center; justify-content: flex-end; padding-right: 7px; box-sizing: border-box; }
+.gcal-allday-col { flex: 1; border-left: 1px solid var(--b2); padding: 2px 2px; min-width: 0; }
+.gcal-allday-chip { font-size: 10px; padding: 1px 6px; border-radius: 3px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
 
 /* Week/Day header */
 .gcal-week-hdr { display: flex; flex-shrink: 0; border-bottom: 1px solid var(--b2); background: rgba(200,205,212,0.3); }
