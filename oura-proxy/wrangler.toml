@@ -1,6 +1,7 @@
 name = "muddy-boat-633b"
 main = "worker.js"
 compatibility_date = "2024-01-01"
+account_id = "b0ddb05a552d25f9d74a4ddfe740b555"
 
 [[d1_databases]]
 binding = "DB"

@@ -2,14 +2,16 @@
  * Personal OS — Cloudflare Worker
  *
  * Routes:
- *   GET  /auth/google              → Google OAuth redirect
- *   GET  /auth/google/callback     → Google OAuth callback (sets session)
+ *   GET  /auth/google              → Google OAuth redirect (includes Calendar scope)
+ *   GET  /auth/google/callback     → Google OAuth callback (sets session + saves gcal tokens)
  *   GET  /auth/me                  → Current session info
  *   POST /auth/logout              → Invalidate session
  *   GET  /api/integrations         → List integration connection status
  *   POST /api/integrations/oura    → Save Oura PAT to D1
  *   DELETE /api/integrations/oura  → Remove Oura PAT
  *   GET  /api/oura/*               → Oura API proxy (session-based, PAT from D1)
+ *   GET  /api/calendar/events      → Google Calendar events (auto-refresh token)
+ *   POST /api/calendar/events      → Create Google Calendar event
  *   POST /ai-review                → AI health review (Gemini)
  *   GET  /*                        → Legacy Oura proxy (PAT via Authorization header)
  */
@@ -58,6 +60,24 @@ export default {
         if (!session) return json({ error: 'unauthenticated' }, 401);
         if (request.method === 'POST')   return handleSaveOuraPAT(request, env, session);
         if (request.method === 'DELETE') return handleDeleteIntegration(env, session, 'oura');
+      }
+
+      if (path === '/api/calendar/tasks-calendar') {
+        if (!session) return json({ error: 'unauthenticated' }, 401);
+        return handleTasksCalendar(request, env, session);
+      }
+
+      if (path === '/api/calendar/events') {
+        if (!session) return json({ error: 'unauthenticated' }, 401);
+        if (request.method === 'GET')  return handleGetCalendarEvents(request, env, session);
+        if (request.method === 'POST') return handleCreateCalendarEvent(request, env, session);
+      }
+
+      if (path.startsWith('/api/calendar/events/')) {
+        if (!session) return json({ error: 'unauthenticated' }, 401);
+        const eventId = decodeURIComponent(path.replace('/api/calendar/events/', ''));
+        if (request.method === 'PATCH')  return handleUpdateCalendarEvent(request, env, session, eventId);
+        if (request.method === 'DELETE') return handleDeleteCalendarEvent(request, env, session, eventId);
       }
 
       // ── Authenticated Oura proxy (/api/oura/…) ─────────────────────────
@@ -126,10 +146,10 @@ async function handleGoogleLogin(request, env) {
     client_id:     env.GOOGLE_CLIENT_ID,
     redirect_uri:  redirectUri,
     response_type: 'code',
-    scope:         'openid email profile',
+    scope:         'openid email profile https://www.googleapis.com/auth/calendar',
     state,
-    access_type:   'online',
-    prompt:        'select_account',
+    access_type:   'offline',
+    prompt:        'consent',
   });
 
   return Response.redirect(`${GOOGLE_AUTH_URL}?${params}`, 302);
@@ -198,6 +218,20 @@ async function handleGoogleCallback(request, env) {
   await env.DB.prepare(
     'INSERT INTO sessions (id, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)'
   ).bind(sessionToken, user.id, now, now + SESSION_TTL).run();
+
+  // Save Google Calendar tokens
+  if (tokenData.access_token) {
+    const gcalExpires = tokenData.expires_in ? now + tokenData.expires_in : null;
+    await env.DB.prepare(`
+      INSERT INTO integrations (user_id, service, token, refresh_token, expires_at, updated_at)
+      VALUES (?, 'gcal', ?, ?, ?, ?)
+      ON CONFLICT(user_id, service) DO UPDATE SET
+        token         = excluded.token,
+        refresh_token = COALESCE(excluded.refresh_token, refresh_token),
+        expires_at    = excluded.expires_at,
+        updated_at    = excluded.updated_at
+    `).bind(user.id, tokenData.access_token, tokenData.refresh_token || null, gcalExpires, now).run();
+  }
 
   return callbackPage(sessionToken);
 }
@@ -308,6 +342,200 @@ async function handleOuraProxyLegacy(request, url) {
 }
 
 // ════════════════════════════════════════════════════════════════════════
+// Google Calendar
+// ════════════════════════════════════════════════════════════════════════
+
+async function gcalAccessToken(env, userId) {
+  const row = await env.DB.prepare(
+    'SELECT token, refresh_token, expires_at FROM integrations WHERE user_id = ? AND service = ?'
+  ).bind(userId, 'gcal').first();
+  if (!row) return null;
+
+  const now = Math.floor(Date.now() / 1000);
+  if (row.token && row.expires_at && row.expires_at > now + 60) return row.token;
+  if (!row.refresh_token) return row.token; // no refresh token, use as-is
+
+  const res = await fetch(GOOGLE_TOKEN_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id:     env.GOOGLE_CLIENT_ID,
+      client_secret: env.GOOGLE_CLIENT_SECRET,
+      refresh_token: row.refresh_token,
+      grant_type:    'refresh_token',
+    }),
+  });
+  const data = await res.json();
+  if (!data.access_token) return row.token;
+
+  const newExp = now + (data.expires_in || 3600);
+  await env.DB.prepare(
+    'UPDATE integrations SET token = ?, expires_at = ?, updated_at = ? WHERE user_id = ? AND service = ?'
+  ).bind(data.access_token, newExp, now, userId, 'gcal').run();
+  return data.access_token;
+}
+
+async function handleGetCalendarEvents(request, env, session) {
+  const accessToken = await gcalAccessToken(env, session.user.id);
+  if (!accessToken) return json({ connected: false, events: [] });
+
+  const url = new URL(request.url);
+  const now = new Date();
+  const timeMin = url.searchParams.get('timeMin') || new Date(now - 7 * 86400000).toISOString();
+  const timeMax = url.searchParams.get('timeMax') || new Date(+now + 14 * 86400000).toISOString();
+
+  const params = new URLSearchParams({
+    timeMin, timeMax, singleEvents: 'true', orderBy: 'startTime', maxResults: '500',
+  });
+
+  // Get all calendars the user has
+  const calListRes = await fetch(
+    'https://www.googleapis.com/calendar/v3/users/me/calendarList',
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  let calendars = [{ id: 'primary', editable: true }];
+  let calListError = null;
+  if (calListRes.ok) {
+    const calList = await calListRes.json();
+    const items = (calList.items || []).filter(c => c.accessRole !== 'freeBusyReader');
+    if (items.length > 0) {
+      calendars = items.map(c => ({
+        id: c.id,
+        // owner / writer can edit events; reader cannot
+        editable: c.accessRole === 'owner' || c.accessRole === 'writer',
+      }));
+    }
+  } else {
+    calListError = `calendarList ${calListRes.status}`;
+  }
+
+  // Fetch events from all calendars in parallel
+  const results = await Promise.all(calendars.map(async cal => {
+    const res = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events?${params}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.items || []).map(ev => ({
+      ...ev, _calendarId: cal.id, _editable: cal.editable,
+    }));
+  }));
+
+  const events = results.flat().sort((a, b) => {
+    const ta = a.start?.dateTime || a.start?.date || '';
+    const tb = b.start?.dateTime || b.start?.date || '';
+    return ta.localeCompare(tb);
+  });
+
+  return json({ connected: true, events, _debug: { calendars, calListError } });
+}
+
+// Get-or-create the dedicated "Personal OS Tasks" calendar; returns its id.
+const TASKS_CAL_SUMMARY = 'Personal OS Tasks';
+async function handleTasksCalendar(request, env, session) {
+  const accessToken = await gcalAccessToken(env, session.user.id);
+  if (!accessToken) return json({ error: 'gcal_not_connected' }, 403);
+
+  // Cached id in integrations metadata?
+  const row = await env.DB.prepare(
+    'SELECT metadata FROM integrations WHERE user_id = ? AND service = ?'
+  ).bind(session.user.id, 'gcal').first();
+  let meta = {};
+  try { meta = row?.metadata ? JSON.parse(row.metadata) : {}; } catch {}
+  if (meta.tasksCalId) {
+    // verify it still exists
+    const chk = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(meta.tasksCalId)}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (chk.ok) return json({ id: meta.tasksCalId });
+  }
+
+  // Search existing calendars by summary
+  const listRes = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList',
+    { headers: { Authorization: `Bearer ${accessToken}` } });
+  let calId = null;
+  if (listRes.ok) {
+    const list = await listRes.json();
+    const found = (list.items || []).find(c => c.summary === TASKS_CAL_SUMMARY);
+    if (found) calId = found.id;
+  }
+
+  // Create if missing
+  if (!calId) {
+    const createRes = await fetch('https://www.googleapis.com/calendar/v3/calendars', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ summary: TASKS_CAL_SUMMARY, timeZone: 'Asia/Tokyo' }),
+    });
+    if (!createRes.ok) {
+      const err = await createRes.text();
+      return json({ error: 'create_failed', detail: err }, createRes.status);
+    }
+    const created = await createRes.json();
+    calId = created.id;
+  }
+
+  // Persist id in metadata
+  meta.tasksCalId = calId;
+  await env.DB.prepare(
+    'UPDATE integrations SET metadata = ? WHERE user_id = ? AND service = ?'
+  ).bind(JSON.stringify(meta), session.user.id, 'gcal').run();
+
+  return json({ id: calId });
+}
+
+async function handleCreateCalendarEvent(request, env, session) {
+  const accessToken = await gcalAccessToken(env, session.user.id);
+  if (!accessToken) return json({ error: 'gcal_not_connected' }, 403);
+
+  const body = await request.json();
+  const gcalRes = await fetch(
+    'https://www.googleapis.com/calendar/v3/calendars/primary/events',
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }
+  );
+  const data = await gcalRes.json();
+  return json(data, gcalRes.status);
+}
+
+async function handleUpdateCalendarEvent(request, env, session, eventId) {
+  const accessToken = await gcalAccessToken(env, session.user.id);
+  if (!accessToken) return json({ error: 'gcal_not_connected' }, 403);
+
+  const calId = new URL(request.url).searchParams.get('calendarId') || 'primary';
+  const body  = await request.json();
+  const gcalRes = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events/${eventId}`,
+    {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }
+  );
+  const data = await gcalRes.json();
+  if (!gcalRes.ok) return json({ error: 'gcal_update_failed', detail: data }, gcalRes.status);
+  return json(data, gcalRes.status);
+}
+
+async function handleDeleteCalendarEvent(request, env, session, eventId) {
+  const accessToken = await gcalAccessToken(env, session.user.id);
+  if (!accessToken) return json({ error: 'gcal_not_connected' }, 403);
+
+  const calId = new URL(request.url).searchParams.get('calendarId') || 'primary';
+  const gcalRes = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events/${eventId}`,
+    { method: 'DELETE', headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  return new Response(null, {
+    status: gcalRes.status,
+    headers: { 'Access-Control-Allow-Origin': '*' }
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════════
 // AI Review (Gemini)
 // ════════════════════════════════════════════════════════════════════════
 
@@ -408,7 +636,7 @@ function corsOptions() {
   return new Response(null, {
     headers: {
       'Access-Control-Allow-Origin':  '*',
-      'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Authorization, Content-Type',
     }
   });

@@ -7,6 +7,13 @@ Health,claudedesign.html
 .env.local
 *.env
 
+# 抽出ファイル（AI共有用一時ファイル）
+_extract_*.html
+extract.py
+
+# wrangler ローカルキャッシュ
+.wrangler/
+
 # OS
 .DS_Store
 Thumbs.db
